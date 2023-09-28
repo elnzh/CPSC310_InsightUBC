@@ -420,6 +420,7 @@ describe("InsightFacade", function () {
 		after(function () {
 			console.info(`After: ${this.test?.parent?.title}`);
 			clearDisk();
+
 		});
 
 		type PQErrorKind = "ResultTooLargeError" | "InsightError";

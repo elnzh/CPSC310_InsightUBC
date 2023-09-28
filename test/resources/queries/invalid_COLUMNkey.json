@@ -1,0 +1,18 @@
+{
+  "title": "Invalid key sections_det in COLUMNS",
+  "input":{
+    "WHERE": {
+      "IS": {
+        "sections_dept": "z*"
+      }
+    },
+    "OPTIONS": {
+      "COLUMNS": [
+        "sections_det"
+      ],
+      "ORDER": "sections_avg"
+    }
+  },
+  "errorExpected": true,
+  "expected":"InsightError"
+}

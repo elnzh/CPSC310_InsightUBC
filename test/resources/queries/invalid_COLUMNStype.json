@@ -1,0 +1,15 @@
+{
+  "title": "COLUMNS must be a non-empty array",
+  "input": {
+    "WHERE": {
+      "GT": {
+        "courses_avg": 10
+      }
+    },
+    "OPTIONS": {
+      "COLUMNS": {}
+    }
+  },
+  "errorExpected": true,
+  "expected":"InsightError"
+}

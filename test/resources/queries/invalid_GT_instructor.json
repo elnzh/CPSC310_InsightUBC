@@ -1,0 +1,19 @@
+{
+  "title": "invalid_GT_instructor",
+  "input":{
+    "WHERE": {
+      "GT": {
+        "sections_instructor": "Phil"
+      }
+    },
+    "OPTIONS": {
+      "COLUMNS": [
+        "sections_dept",
+        "sections_avg"
+      ],
+      "ORDER": "sections_avg"
+    }
+  },
+  "errorExpected": true,
+  "expected":"InsightError"
+}

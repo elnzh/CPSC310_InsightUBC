@@ -1,0 +1,20 @@
+{
+  "title": "Asterisks (*) can only be the first or last characters of input strings",
+  "input": {
+    "WHERE": {
+      "IS": {
+        "sections_dept":"z*l"
+
+      }
+    },
+    "OPTIONS": {
+      "COLUMNS": [
+        "sections_dept",
+        "sections_avg"
+      ],
+      "ORDER": "sections_avg"
+    }
+  },
+  "errorExpected": true,
+  "expected": "InsightError"
+}

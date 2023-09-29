@@ -1,0 +1,22 @@
+{
+  "title": "OPTIONS: []",
+  "input": {
+    "WHERE": {
+      "AND": [
+        {
+          "IS": {
+            "sections_id": "4*"
+          }
+        },
+        {
+          "IS": {
+            "sections_dept": "arcl"
+          }
+        }
+      ]
+    },
+    "OPTIONS":[]
+  },
+  "errorExpected": true,
+  "expected":"InsightError"
+}

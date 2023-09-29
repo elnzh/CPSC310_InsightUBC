@@ -1,0 +1,19 @@
+{
+  "title": "Referenced dataset cannot be empty string",
+  "input": {
+    "WHERE": {
+      "GT": {
+        "__avg": 97
+      }
+    },
+    "OPTIONS": {
+      "COLUMNS": [
+        "__dept",
+        "__avg"
+      ],
+      "ORDER": "__avg"
+    }
+  },
+  "errorExpected": true,
+  "expected":"InsightError"
+}

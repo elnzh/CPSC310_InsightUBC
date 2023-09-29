@@ -1,0 +1,19 @@
+{
+  "title": "Referenced dataset not added yet",
+  "input": {
+    "WHERE": {
+      "GT": {
+        "sec_avg": 97
+      }
+    },
+    "OPTIONS": {
+      "COLUMNS": [
+        "sec_dept",
+        "sec_avg"
+      ],
+      "ORDER": "sec_avg"
+    }
+  },
+  "errorExpected": true,
+  "expected":"InsightError"
+}

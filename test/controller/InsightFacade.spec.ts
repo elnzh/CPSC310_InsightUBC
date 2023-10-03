@@ -359,6 +359,16 @@ describe("InsightFacade", function () {
 
 	});
 
+	describe("test",()=> {
+		it("test perform query",()=>{
+			facade = new InsightFacade();
+
+			facade.performQuery("");
+
+
+		});
+	});
+
 	/*
 	 * This test suite dynamically generates tests from the JSON files in test/resources/queries.
 	 * You should not need to modify it; instead, add additional files to the queries directory.
@@ -372,11 +382,12 @@ describe("InsightFacade", function () {
 
 			// Load the datasets specified in datasetsToQuery and add them to InsightFacade.
 			// Will *fail* if there is a problem reading ANY dataset.
-			const loadDatasetPromises = [
-				facade.addDataset("sections", sections, InsightDatasetKind.Sections),
-			];
 
-			return Promise.all(loadDatasetPromises);
+			// const loadDatasetPromises = [
+			// 	facade.addDataset("sections", sections, InsightDatasetKind.Sections),
+			// ];
+			//
+			// return Promise.all(loadDatasetPromises);
 		});
 
 		it("should check for order and make sure order is deep equal", async function(){

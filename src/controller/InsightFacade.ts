@@ -39,19 +39,20 @@ export default class InsightFacade implements IInsightFacade {
 
 	public performQuery(query: unknown): Promise<InsightResult[]> {
 		let root = this.parseQuery(`{
-			"WHERE": {
-				"GT": {
-					"sections_avg": 97
-				}
-			},
-			"OPTIONS": {
-				"COLUMNS": [
-					"sections_dept",
-					"sections_avg"
-				],
-				"ORDER": "sections_avg"
-			}
-		}`);
+    "WHERE": {
+      "IS": {
+        "sections_dept":"z*l*"
+
+      }
+    },
+    "OPTIONS": {
+      "COLUMNS": [
+        "sections_dept",
+        "sections_avg"
+      ],
+      "ORDER": "sections_avg"
+    }
+}`);
 		// this.parseQuery(query);
 
 		return Promise.resolve([]);
@@ -224,23 +225,18 @@ export default class InsightFacade implements IInsightFacade {
 		// console.log("____" + str);
 		let index = str.search("_");
 		if(index === -1) {
-			console.log("no underscore in key");
-			throw new InsightError();
+			throw new InsightError("no underscore in key");
 		}
 		if((str.match(/_/g) || []).length > 1){
-			console.log("more than 1 underscore in key");
-			throw new InsightError();
+			throw new InsightError("more than 1 underscore in key");
 		}
 		if(this.id_str === undefined){
 			// first time, set the id
 			this.id_str = str.substring(0,index);
 		}else if(this.id_str !== str.substring(0,index)){
-			console.log("referenced two datasets");
-			throw new InsightError();
+			throw new InsightError("referenced two datasets");
 		}
-		console.log(this.id_str);
 		str = str.substring(index + 1);
-
 		// 'avg' | 'pass' | 'fail' | 'audit' | 'year'
 		if(str === "avg" || str === "pass" || str === "fail" || str === "audit" || str === "year"){
 			if(type === "SCOMPARISON"){
@@ -255,6 +251,24 @@ export default class InsightFacade implements IInsightFacade {
 			}
 			if(typeof value === "number"){
 				throw new InsightError("Invalid value type");
+			}
+			// check wildcards
+			if(typeof value === "string"){
+				let len = value.split("*").length - 1;
+				// console.log(value + " " + len);
+				if(len > 2){
+					throw new InsightError("Asterisks (*) can only be the first or last characters of input strings");
+				}else if(len === 2){
+					if(value[0] !== "*" || value[value.length - 1] !== "*"){
+						throw new InsightError("Asterisks (*) can only be the first or last characters " +
+							"of input strings");
+					}
+				}else if(len === 1){
+					if(value[0] !== "*" && value[value.length - 1] !== "*"){
+						throw new InsightError("Asterisks (*) can only be the first or last characters " +
+                            "of input strings");
+					}
+				}
 			}
 		}else{
 			console.log("Invalid key");

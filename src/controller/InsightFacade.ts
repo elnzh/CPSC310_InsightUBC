@@ -47,7 +47,7 @@ export default class InsightFacade implements IInsightFacade {
 		{"OR":
 			[{"AND":
 				[{"GT":{"sections_avg":50}},
-		 		{"IS":{"sections_dept":"phil"}}
+		 		{"IS":{"sections_dept":"p*"}}
 			]},
 		{"EQ":{"sections_pass":10}}]},
 		"OPTIONS":{"COLUMNS":["sections_dept",
@@ -71,7 +71,7 @@ export default class InsightFacade implements IInsightFacade {
 		// console.log(this.idAndDatasets[this.id].length);
 		let result = this.answerQuery(root);
 		console.log(result);
-		return Promise.resolve([]);
+		return Promise.resolve(result);
 	}
 	public answerQueryWhere(node: QueryTreeNode){
 		console.log(97);
@@ -127,7 +127,7 @@ export default class InsightFacade implements IInsightFacade {
 	public answerQuery(node: QueryTreeNode){
 		let nodes =  node.getChildren();
 		let colIndex: number[] = [];
-		let res: object[] = [];
+		let res: InsightResult[] = [];
 		for(const n of nodes){
 			if(n.getKey() === "WHERE"){
 				colIndex = this.answerQueryWhere(n.getChildren()[0]);
@@ -165,36 +165,63 @@ export default class InsightFacade implements IInsightFacade {
 	}
 	private answerQueryWhereBaseCase(node: QueryTreeNode) {
 		let sectionIndex: number[] = [];
-		if (node.getKey() === "IS" || node.getKey() === "EQ") {
-			console.log(node.getKey());
-			for (let i = 0; i < this.sections.length; i++) {
-				if (this.sections[i].getValue(node.getChildrenString()[0]) === node.getValue()) {
-					// if a section matches, add its index
-					sectionIndex.push(i);
-					// this.res.push(sec.toJson());
-				}
+		if (node.getKey() === "IS") {
+			let start: boolean = false;
+			let end: boolean = false;
+			let value: string = String(node.getValue());
+			if(value.startsWith("*")){
+				value = value.substring(1);
+				start = true;
+			}else if(value.endsWith("*")){
+				value = value.substring(0, value.length - 1);
+				end = true;
 			}
-		} else if (node.getKey() === "GT") {
 			for (let i = 0; i < this.sections.length; i++) {
-				console.log(155);
-				if (this.sections[i].getValue(node.getChildrenString()[0]) > Number(node.getValue())) {
-					// if a section matches, add its index
-					sectionIndex.push(i);
-					// this.res.push(sec.toJson());
-				}
+				this.handleQueryIs(start, end, i, node, value, sectionIndex);
 			}
-		} else if (node.getKey() === "LT") {
+		} else {
+			let value = node.getKey();
 			for (let i = 0; i < this.sections.length; i++) {
-				if (this.sections[i].getValue(node.getChildrenString()[0]) < Number(node.getValue())) {
-					// if a section matches, add its index
-					sectionIndex.push(i);
-					// this.res.push(sec.toJson());
+				if (node.getKey() === "EQ") {
+					if (this.sections[i].getValue(node.getChildrenString()[0]) === node.getValue()) {
+						sectionIndex.push(i); // if a section matches, add its index
+					}
+				}else if (node.getKey() === "GT") {
+					if (this.sections[i].getValue(node.getChildrenString()[0]) > Number(node.getValue())) {
+						sectionIndex.push(i); // if a section matches, add its index
+					}
+				}else if (node.getKey() === "LT") {
+					if (this.sections[i].getValue(node.getChildrenString()[0]) < Number(node.getValue())) {
+						sectionIndex.push(i); // if a section matches, add its index
+					}
 				}
 			}
 		}
 		return sectionIndex;
 	}
 
+
+	private handleQueryIs(start: boolean, end: boolean, i: number, node: QueryTreeNode,
+						  value: string, sectionIndex: number[]) {
+		if (start && end) {
+			if (String(this.sections[i].getValue(node.getChildrenString()[0])).includes(value)) {
+				sectionIndex.push(i);
+			}
+		} else if (start) {
+			if (String(this.sections[i].getValue(node.getChildrenString()[0])).endsWith(value)) {
+				sectionIndex.push(i);
+			}
+		} else if (end) {
+			if (String(this.sections[i].getValue(node.getChildrenString()[0])).startsWith(value)) {
+				sectionIndex.push(i);
+			}
+		} else {
+			if (this.sections[i].getValue(node.getChildrenString()[0]) === value) {
+				// if a section matches, add its index
+				sectionIndex.push(i);
+			}
+		}
+	}
 
 	public findDuplicate(arr1: number[], arr2: number[]){
 		return arr1.filter((element) => arr2.includes(element));

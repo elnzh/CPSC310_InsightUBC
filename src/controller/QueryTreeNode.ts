@@ -2,13 +2,15 @@
 
 export class QueryTreeNode {
 	private key: string;
-	private value: string|string[]|undefined;
+	private value: number|string|string[]|undefined;
 	private children: QueryTreeNode[];
+	private childrenStr: string[];
 
-	constructor(key: string, value: string|string[]|undefined){
+	constructor(key: string, value: number|string|string[]|undefined){
 		this.key = key;
 		this.value = value;
 		this.children = [];
+		this.childrenStr = [];
 
 	}
 
@@ -29,8 +31,18 @@ export class QueryTreeNode {
 		}
 		return true;
 	}
+	public setValue(val: number|string|string[]|undefined){
+		this.value = val;
+	}
+
 	public getValue(){
 		return this.value;
+	}
+	public setChildrenString(str: string){
+		this.childrenStr.push(str);
+	}
+	public getChildrenString(){
+		return this.childrenStr;
 	}
 
 	public getKey(){
@@ -42,6 +54,12 @@ export class QueryTreeNode {
 		for (const item of this.children) {
 			s = s + item.getKey() + ", ";
 		}
+		if(this.childrenStr.length !== 0){
+			s = s + "] children_name: [";
+			for(const item of this.childrenStr){
+				s = s + item + ",";
+			}
+		}
 		s = s + "]";
 		for (const item of this.children) {
 			s = s + "\n" + item.toString();
@@ -50,5 +68,23 @@ export class QueryTreeNode {
 
 		return s;
 	}
+
+	public isKeyWhere(){
+		return this.key === "WHERE";
+	}
+
+	public isKeyOptions(){
+		return this.key === "OPTIONS";
+	}
+	public isKeyColumns(){
+		return this.key === "COLUMNS";
+	}
+	public isKeyOrder(){
+		return this.key === "ORDER";
+	}
+	public isKeyKey(){
+		 return this.key.indexOf("_") > -1;
+	}
+
 
 }

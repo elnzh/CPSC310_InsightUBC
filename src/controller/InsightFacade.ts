@@ -21,8 +21,10 @@ import QueryBuilder from "./QueryBuilder";
 export default class InsightFacade implements IInsightFacade {
 
 	private idAndDatasets: {[key: string]: {kind: InsightDatasetKind, data: any[]}} = {};
+	private querybuilder: QueryBuilder;
 	constructor() {
 		console.log("InsightFacadeImpl::init()");
+		 this.querybuilder = new QueryBuilder();
 	}
 	public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
 		return new Promise<string[]>((resolve, reject) => {
@@ -88,17 +90,17 @@ export default class InsightFacade implements IInsightFacade {
 
 	public performQuery(query: unknown): Promise<InsightResult[]> {
 		// console.log(this.idAndDatasets["id1"]);
-		// return Promise.resolve([]);
+		//  return Promise.reject();
 
-		let querybuilder = new QueryBuilder();
-		let root = querybuilder.parseQuery(query);
+
+		let root = this.querybuilder.parseQuery(query);
 		console.log(this.id_str);
 		console.log(this.idAndDatasets.toString());
-		let temp = this.idAndDatasets[querybuilder.getId()];
+		let temp = this.idAndDatasets[this.querybuilder.getId()];
 		if(temp === undefined){
-			throw new InsightError("Referenced dataset " + querybuilder.getId() + " not added yet");
+			throw new InsightError("Referenced dataset " + this.querybuilder.getId() + " not added yet");
 		}else{
-			this.sections = this.idAndDatasets[querybuilder.getId()].data;
+			this.sections = this.idAndDatasets[this.querybuilder.getId()].data;
 		}
 
 		let result = this.answerQuery(root);
@@ -175,25 +177,20 @@ export default class InsightFacade implements IInsightFacade {
 				if(typeof order === "object"){
 					order = order[0];
 				}
-
 				if(typeof column === "string" || typeof column === "object"){
 					for(let i of colIndex){
-						let s = this.sections[i];
-						res.push(s.toJson(column));
+						res.push(this.sections[i].toJson(column, this.querybuilder.getId()));
 					}
-					res.sort((a: {[key: string]: any}, b: {[key: string]: any}) => a[String(order)
-					] > b[String(order)] ? 1 : -1);
-
+					res.sort((a: {[key: string]: any}, b: {[key: string]: any}) => a[
+						this.querybuilder.getId() + "_" + String(order)] > b[this.querybuilder.getId() + "_" +
+					String(order)] ? 1 : -1);
 				}else{
 					throw new InsightError("line 199");
 				}
-
-
 			}else{
-				console.log("error");
+				throw new InsightError("unknown key");
 			}
 		}
-        //
 		return res;
 	}
 	private answerQueryWhereBaseCase(node: QueryTreeNode) {

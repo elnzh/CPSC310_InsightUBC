@@ -48,31 +48,34 @@ export class Section {
 	}
 
 
-	public toJson(keylist: string|string[]|undefined){
+	public toJson(keylist: string|string[]|undefined, id: string){
 		if (typeof keylist === "object"){
 			let ret: {[key: string]: string|number;} = {};
 			for(let i of keylist){
-				ret[i] = this.getValue(i);
+				ret[id + "_"  + i] = this.getValue(i);
 			}
 			return ret;
 
 		}else if(typeof keylist === "string"){
+			let temp = id + "_"  + keylist;
 			return{
-				keylist: this.getValue(keylist)
+				temp:  this.getValue(keylist)
 			};
 		}else{
-			return {
-				uuid: this.uuid,
-				id: this.id,
-				title: this.title,
-				instructor: this.instructor,
-				dept: this.dept,
-				year: this.year,
-				avg: this.avg,
-				pass: this.pass,
-				fail: this.fail,
-				audit: this.audit
-			};
+			let ret: {[key: string]: string|number;} = {};
+			let pref = id + "_";
+			ret[pref + "uuid"] = this.uuid;
+			ret[pref + "id"] = this.id;
+			ret[pref + "title"] = this.title;
+			ret[pref + "instructor"] = this.instructor;
+			ret[pref + "dept"] = this.dept;
+			ret[pref + "year"] = this.year;
+			ret[pref + "avg"] = this.avg;
+			ret[pref + "pass"] = this.pass;
+			ret[pref + "fail"] = this.fail;
+			ret[pref + "audit"] = this.audit;
+			return ret;
+
 		}
 
 	}

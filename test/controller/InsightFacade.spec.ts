@@ -32,8 +32,8 @@ describe("InsightFacade", function () {
 
 	before(function () {
 		// This block runs once and loads the datasets.
+		// sections = getContentFromArchives("pair.zip");
 		sections = getContentFromArchives("pair.zip");
-
 		// Just in case there is anything hanging around from a previous run of the test suite
 		clearDisk();
 	});
@@ -360,15 +360,15 @@ describe("InsightFacade", function () {
 
 	});
 
-	describe("test",()=> {
-		it("test perform query",()=>{
-			facade = new InsightFacade();
-
-			facade.performQuery("");
-
-
-		});
-	});
+	// describe("test",()=> {
+	// 	it("test perform query",()=>{
+	// 		facade = new InsightFacade();
+	//
+	// 		facade.performQuery("");
+	//
+	//
+	// 	});
+	// });
 
 	/*
 	 * This test suite dynamically generates tests from the JSON files in test/resources/queries.

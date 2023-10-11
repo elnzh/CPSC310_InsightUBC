@@ -11,14 +11,14 @@ export default class QueryBuilder{
 	private id_str: string = "";
 	public parseQuery(query: unknown) {
         // check if query is a valid query
-		if(query === null || query === undefined || (typeof query !== "string" && !(query instanceof String))) {
+		if(query === null || query === undefined || typeof query !== "object" ) {
 			console.log("line 65 arg error");
 			throw new InsightError();
 		}
 		let parsed;
 
 		try{
-			parsed = JSON.parse(String(query));
+			parsed = JSON.parse(JSON.stringify(query));
 			console.log(parsed);
 		}catch(err){
 			console.log("line 74 invalid query string");
@@ -62,6 +62,9 @@ export default class QueryBuilder{
 
 
 	public handleWhere(query: object, root: QueryTreeNode){
+		if(Object.keys(query).length === 0) {
+			throw new InsightError(root.getKey() + " must be object");
+		}
 		let temp;
 		if(Mcomparator.includes(root.getKey()) || Scomparator.includes(root.getKey())){
             // means we reach the bottom level of the tree
@@ -91,7 +94,7 @@ export default class QueryBuilder{
 				}
 			}else if(Negation.includes(key)){
 				let value = query[key as keyof typeof query];
-				if(typeof value !== "object") {
+				if(typeof value !== "object" || Array.isArray(value)) {
 					throw new InsightError("line 158 NOT must be object");
 				}
 				temp = new QueryTreeNode(key, undefined);
@@ -100,7 +103,7 @@ export default class QueryBuilder{
 				this.handleWhere(value,temp);
 			}else{
                 // encounter an unknown key => invalid query
-				return new InsightError("line 164 Invalid filter key");
+				throw new InsightError("line 164 Invalid filter key");
 			}
 		}
 	}
@@ -109,9 +112,10 @@ export default class QueryBuilder{
 		let key = Object.keys(query)[0];
 		let value = query[key as keyof typeof query];
 		let tempKey;
+
 		if (Mcomparator.includes(root.getKey())) {
 			tempKey = this.checkKeyValue(key, "MCOMPARISON", value);
-		} else {
+		}else{
 			tempKey = this.checkKeyValue(key, "SCOMPARISON", value);
 		}
 		root.setValue(value);
@@ -127,7 +131,12 @@ export default class QueryBuilder{
      * This function checks type in COLUMNS and ORDER clauses, check if they follow EBNF syntax rule
      * Any violation will throw a new InsightError
      */
-	public handleOptions(query: object, columns: object, order: object, root: QueryTreeNode){
+	public handleOptions(options: object, columns: object, order: object, root: QueryTreeNode){
+		for(let key in options){
+			if(key !== "COLUMNS" && key !== "ORDER"){
+				throw new InsightError("Invalid keys in OPTIONS");
+			}
+		}
 		let temp;
 		if(columns === undefined){
 			console.log("line 174 OPTIONS missing COLUMNS");
@@ -236,6 +245,10 @@ export default class QueryBuilder{
 			throw new InsightError("Invalid key");
 		}
 		return str; // value without id
+	}
+
+	public getId(){
+		return this.id_str;
 	}
 
 

@@ -6,7 +6,8 @@ import {
 	InsightResult,
 	NotFoundError, ResultTooLargeError
 } from "./IInsightFacade";
-
+import DataSetHelper from "./DataSetHelper";
+import * as fs from "fs-extra";
 import {QueryTreeNode} from "./QueryTreeNode";
 import {Section} from "./Section";
 import QueryBuilder from "./QueryBuilder";
@@ -19,59 +20,91 @@ import QueryBuilder from "./QueryBuilder";
 
 export default class InsightFacade implements IInsightFacade {
 
+	private idAndDatasets: {[key: string]: {kind: InsightDatasetKind, data: any[]}} = {};
 	constructor() {
 		console.log("InsightFacadeImpl::init()");
 	}
-
 	public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
-		return Promise.reject("Not implemented.");
+		return new Promise<string[]>((resolve, reject) => {
+			if (id === null || id.includes("_") || id.trim().length === 0) {
+				reject(new InsightError("The input id is invalid!"));
+			}
+			if (Object.keys(this.idAndDatasets).includes(id)) {
+				reject(new InsightError("The input id has existed!"));
+			}
+			if (!(kind === InsightDatasetKind.Sections)) {
+				reject(new InsightError("The input kind is not valid!"));
+			}
+			DataSetHelper.addSectionDataset(content).then((r: any) => {
+				this.idAndDatasets[id] = {kind: kind, data: r};
+				return this.writeToFiles();
+			}).then(() => {
+				resolve(Object.keys(this.idAndDatasets));
+			}).catch((error) => {
+				reject(new InsightError("Invalid files."));
+			});
+		});
+	}
+
+	private writeToFiles() {
+		fs.ensureDirSync("./data");
+		return fs.writeJson("./data/datasets.json", this.idAndDatasets);
 	}
 
 	public removeDataset(id: string): Promise<string> {
-		return Promise.reject("Not implemented.");
+		return new Promise<string>((resolve, reject) => {
+			if (id === null || id.includes("_") || id.trim().length === 0) {
+				reject(new InsightError("The input id is invalid!"));
+			}
+			if (!Object.keys(this.idAndDatasets).includes(id)) {
+				reject(new NotFoundError("The input id did not exist!"));
+			}
+			delete this.idAndDatasets[id];
+			this.writeToFiles().then(() => {
+				resolve(id);
+			}).catch((err) => {
+				reject(err);
+			});
+		});
 	}
 
 	public listDatasets(): Promise<InsightDataset[]> {
-		return Promise.reject("Not implemented.");
+		let list: InsightDataset[] = [];
+		for (const [key, value] of Object.entries(this.idAndDatasets)) {
+			list.push({
+				id: key,
+				kind: value.kind,
+				numRows: value.data.length
+			});
+		}
+		return Promise.resolve(list);
 	}
 
 
 	private id_str: string = "";
-	private idAndDatasets: {[key: string]: Section[]} = {};
+	// private idAndDatasets: {[key: string]: Section[]} = {};
 	private sections: Section[] = [];
 
 
 	public performQuery(query: unknown): Promise<InsightResult[]> {
+		// console.log(this.idAndDatasets["id1"]);
+		// return Promise.resolve([]);
+
 		let querybuilder = new QueryBuilder();
-		let root = querybuilder.parseQuery(`{"WHERE":
-		{"OR":
-			[{"AND":
-				[{"GT":{"sections_avg":50}},
-		 		{"IS":{"sections_dept":"p*"}}
-			]},
-		{"EQ":{"sections_pass":10}}]},
-		"OPTIONS":{"COLUMNS":["sections_dept",
-		"sections_id","sections_avg"],"ORDER":"sections_id"}}`);
+		let root = querybuilder.parseQuery(query);
+		console.log(this.id_str);
+		console.log(this.idAndDatasets.toString());
+		let temp = this.idAndDatasets[querybuilder.getId()];
+		if(temp === undefined){
+			throw new InsightError("Referenced dataset " + querybuilder.getId() + " not added yet");
+		}else{
+			this.sections = this.idAndDatasets[querybuilder.getId()].data;
+		}
 
-		// let parsed = JSON.parse(String(`{"WHERE":{"OR":[{"AND":[{"GT":{"sections_avg":90}},
-		// {"IS":{"sections_dept":"adhe"}}]},{"EQ":{"sections_avg":95}}]},"OPTIONS":{"COLUMNS":["sections_dept",
-		// "sections_id","sections_avg"],"ORDER":"sections_avg"}}`));
-		// console.log(parsed.WHERE.OR.length);
-
-
-		let sec =  new Section("20405", "316", "phil after 1800","schouls, peter",
-			"phil", 2009, 71.98, 57, 2, 0);
-		this.idAndDatasets[this.id_str] = [];
-		this.idAndDatasets[this.id_str].push(sec);
-		this.idAndDatasets[this.id_str].push( new Section("20225", "326", "phil after 1800","schouls, peter",
-			"phil", 2009, 71.98, 57, 2, 0));
-		this.idAndDatasets[this.id_str].push( new Section("20225", "336", "phil after 1800","schouls, peter",
-			"phil", 2009, 71, 57, 2, 0));
-		this.sections = this.idAndDatasets[this.id_str];
-		// console.log(this.idAndDatasets[this.id].length);
 		let result = this.answerQuery(root);
 		console.log(result);
 		return Promise.resolve(result);
+
 	}
 	public answerQueryWhere(node: QueryTreeNode){
 		console.log(97);

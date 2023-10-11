@@ -130,7 +130,8 @@ describe("InsightFacade", function () {
 
 		it("9. should add one dataset without problem",  async function() {
 			try {
-				const result = await facade.addDataset("id", validSections, InsightDatasetKind.Sections);
+				const result = await facade.addDataset("id", sections, InsightDatasetKind.Sections);
+				await facade.performQuery([]);
 				expect(result).to.have.length(1);
 				expect(result).have.deep.members(["id"]);
 			} catch (err) {
@@ -439,7 +440,7 @@ describe("InsightFacade", function () {
 		folderTest<unknown, Promise<InsightResult[]>, PQErrorKind>(
 			"Dynamic InsightFacade PerformQuery tests",
 			(input) => facade.performQuery(input),
-			"./test/resources/queries",
+			"./test/resources/queries/",
 			{
 				assertOnResult: async (actual, expected) => {
 					expect(actual).have.deep.members(await expected); // order doesn't matter;

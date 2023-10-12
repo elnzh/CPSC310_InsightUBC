@@ -109,9 +109,8 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public performQuery(query: unknown): Promise<InsightResult[]> {
+		this.querybuilder = new QueryBuilder();
 		let root = this.querybuilder.parseQuery(query);
-		console.log(this.id_str);
-		console.log(this.idAndDatasets.toString());
 		let temp = this.idAndDatasets[this.querybuilder.getId()];
 		if(temp === undefined){
 			throw new InsightError("Referenced dataset " + this.querybuilder.getId() + " not added yet");

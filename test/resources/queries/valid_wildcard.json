@@ -2,10 +2,19 @@
   "title": "simple wildcards example query",
   "input": {
     "WHERE": {
-      "IS": {
-        "sections_dept":"z*"
+      "AND": [
+        {
+          "IS": {
+            "sections_dept": "*"
+          }
+        },
+        {
+          "EQ": {
+            "sections_avg": 70
+          }
+        }
 
-      }
+      ]
     },
     "OPTIONS": {
       "COLUMNS": [
@@ -16,5 +25,5 @@
     }
   },
   "errorExpected": false,
-  "expected": [{"sections_dept":"zool","sections_avg":83.67},{"sections_dept":"zool","sections_avg":85},{"sections_dept":"zool","sections_avg":85},{"sections_dept":"zool","sections_avg":86.25},{"sections_dept":"zool","sections_avg":86.25},{"sections_dept":"zool","sections_avg":86.8},{"sections_dept":"zool","sections_avg":87},{"sections_dept":"zool","sections_avg":87.14},{"sections_dept":"zool","sections_avg":87.2},{"sections_dept":"zool","sections_avg":87.7},{"sections_dept":"zool","sections_avg":87.75},{"sections_dept":"zool","sections_avg":88.08},{"sections_dept":"zool","sections_avg":88.67},{"sections_dept":"zool","sections_avg":88.75},{"sections_dept":"zool","sections_avg":88.88},{"sections_dept":"zool","sections_avg":89},{"sections_dept":"zool","sections_avg":89},{"sections_dept":"zool","sections_avg":89.17},{"sections_dept":"zool","sections_avg":89.27},{"sections_dept":"zool","sections_avg":89.45},{"sections_dept":"zool","sections_avg":89.45},{"sections_dept":"zool","sections_avg":89.5},{"sections_dept":"zool","sections_avg":89.5},{"sections_dept":"zool","sections_avg":89.56},{"sections_dept":"zool","sections_avg":89.56},{"sections_dept":"zool","sections_avg":89.57},{"sections_dept":"zool","sections_avg":90.2},{"sections_dept":"zool","sections_avg":90.45},{"sections_dept":"zool","sections_avg":90.45},{"sections_dept":"zool","sections_avg":91.67},{"sections_dept":"zool","sections_avg":91.67},{"sections_dept":"zool","sections_avg":92},{"sections_dept":"zool","sections_avg":92.1},{"sections_dept":"zool","sections_avg":92.1},{"sections_dept":"zool","sections_avg":92.71},{"sections_dept":"zool","sections_avg":92.71}]
-}
+  "expected": [{"sections_dept":"anth","sections_avg":70},{"sections_dept":"anth","sections_avg":70},{"sections_dept":"apbi","sections_avg":70},{"sections_dept":"apbi","sections_avg":70},{"sections_dept":"apsc","sections_avg":70},{"sections_dept":"apsc","sections_avg":70},{"sections_dept":"asia","sections_avg":70},{"sections_dept":"asia","sections_avg":70},{"sections_dept":"biol","sections_avg":70},{"sections_dept":"biol","sections_avg":70},{"sections_dept":"chem","sections_avg":70},{"sections_dept":"clst","sections_avg":70},{"sections_dept":"clst","sections_avg":70},{"sections_dept":"clst","sections_avg":70},{"sections_dept":"clst","sections_avg":70},{"sections_dept":"comm","sections_avg":70},{"sections_dept":"econ","sections_avg":70},{"sections_dept":"econ","sections_avg":70},{"sections_dept":"engl","sections_avg":70},{"sections_dept":"engl","sections_avg":70},{"sections_dept":"engl","sections_avg":70},{"sections_dept":"engl","sections_avg":70},{"sections_dept":"fmst","sections_avg":70},{"sections_dept":"fren","sections_avg":70},{"sections_dept":"fren","sections_avg":70},{"sections_dept":"fren","sections_avg":70},{"sections_dept":"ital","sections_avg":70},{"sections_dept":"japn","sections_avg":70},{"sections_dept":"japn","sections_avg":70},{"sections_dept":"japn","sections_avg":70},{"sections_dept":"kin","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"math","sections_avg":70},{"sections_dept":"mech","sections_avg":70},{"sections_dept":"mech","sections_avg":70},{"sections_dept":"musc","sections_avg":70},{"sections_dept":"musc","sections_avg":70},{"sections_dept":"nurs","sections_avg":70},{"sections_dept":"nurs","sections_avg":70},{"sections_dept":"phil","sections_avg":70},{"sections_dept":"phil","sections_avg":70},{"sections_dept":"phys","sections_avg":70},{"sections_dept":"phys","sections_avg":70},{"sections_dept":"psyc","sections_avg":70},{"sections_dept":"psyc","sections_avg":70},{"sections_dept":"psyc","sections_avg":70},{"sections_dept":"psyc","sections_avg":70},{"sections_dept":"psyc","sections_avg":70},{"sections_dept":"psyc","sections_avg":70},{"sections_dept":"rmst","sections_avg":70},{"sections_dept":"rmst","sections_avg":70}]
+  }

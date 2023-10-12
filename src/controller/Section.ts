@@ -1,3 +1,5 @@
+import {InsightError} from "./IInsightFacade";
+
 export class Section {
 	private uuid: string;
 	private id: string;
@@ -23,6 +25,7 @@ export class Section {
 		this.fail = fail;
 		this.audit = audit;
 	}
+
 	public getValue(key: string){
 		if(key === "uuid"){
 			return this.uuid;
@@ -42,8 +45,10 @@ export class Section {
 			return this.pass;
 		}else if(key === "fail"){
 			return this.fail;
-		}else{
+		}else if(key === "audit"){
 			return this.audit;
+		}else{
+			throw new InsightError();
 		}
 	}
 
@@ -79,5 +84,6 @@ export class Section {
 		}
 
 	}
+
 
 }

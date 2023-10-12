@@ -19,7 +19,7 @@ export default class DataSetHelper {
 				return Promise.all(filePromise);
 			})
 			.then((filePromise) => {
-				return this.parseSectionsFiles(filePromise);
+				return Promise.resolve(this.parseSectionsFiles(filePromise));
 			}).catch((error) => {
 				return Promise.reject("Invalid files.");
 			});

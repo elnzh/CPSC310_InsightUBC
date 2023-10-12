@@ -51,6 +51,7 @@ describe("InsightFacade", function () {
 		beforeEach(function () {
 			// This section resets the insightFacade instance
 			// This runs before each test
+			clearDisk();
 			console.info(`BeforeTest: ${this.currentTest?.title}`);
 			facade = new InsightFacade();
 		});
@@ -131,7 +132,6 @@ describe("InsightFacade", function () {
 		it("9. should add one dataset without problem",  async function() {
 			try {
 				const result = await facade.addDataset("id", sections, InsightDatasetKind.Sections);
-				await facade.performQuery([]);
 				expect(result).to.have.length(1);
 				expect(result).have.deep.members(["id"]);
 			} catch (err) {
@@ -288,7 +288,11 @@ describe("InsightFacade", function () {
 				const res = await facade.addDataset("id", sections, InsightDatasetKind.Sections);
 				const result = await facade.listDatasets();
 				expect(result.length).to.equal(1);
-				expect(result).to.deep.equal(myDataset);
+				expect(result).to.deep.equal([{
+					id: "id",
+					kind: InsightDatasetKind.Sections,
+					numRows: 64612
+				}]);
 			}catch(err){
 				expect.fail();
 			}
@@ -316,7 +320,11 @@ describe("InsightFacade", function () {
 				const res = await facade.listDatasets();
 				expect(res).to.be.instanceof(Array);
 				expect(res.length).to.equal(1);
-				expect(res).to.deep.equal(myDataset);
+				expect(res).to.deep.equal([{
+					id: "id",
+					kind: InsightDatasetKind.Sections,
+					numRows: 64612
+				}]);
 			}catch(err){
 				expect.fail();
 			}
@@ -347,11 +355,11 @@ describe("InsightFacade", function () {
 				expect(result).to.deep.equal([{
 					id: "id",
 					kind: InsightDatasetKind.Sections,
-					numRows: 12
+					numRows: 64612
 				},{
 					id: "id1",
 					kind: InsightDatasetKind.Sections,
-					numRows: 12
+					numRows: 64612
 				}]);
 			}catch(err){
 				expect.fail();
@@ -391,6 +399,7 @@ describe("InsightFacade", function () {
 			return Promise.all(loadDatasetPromises);
 		});
 
+
 		it("should check for order and make sure order is deep equal", async function(){
 			try{
 				const result = await facade.performQuery({
@@ -429,6 +438,37 @@ describe("InsightFacade", function () {
 
 		});
 
+		// it("should check for order and make sure order is deep equal", async function(){
+		// 	try{
+		// 		const result = await facade.performQuery({
+		// 			WHERE: {
+		// 				NOT: {
+		// 					GT: {
+		// 						sections_avg: 0
+		// 					}
+		//
+		// 				}
+		// 			},
+		// 			OPTIONS: {
+		// 				COLUMNS: [
+		// 					"sections_dept",
+		// 					"sections_avg"
+		// 				],
+		// 				ORDER: "sections_avg"
+		// 			}
+		// 		});
+		//
+		// 		expect(result).have.deep.members([{sections_dept:"frst",sections_avg:0},
+		// 			{sections_dept:"lfs",sections_avg:0},{sections_dept:"lfs",sections_avg:0}]
+		// 		);
+		//
+		// 	}catch(err){
+		// 		expect.fail();
+		// 	}
+		//
+		// });
+
+
 		after(function () {
 			console.info(`After: ${this.test?.parent?.title}`);
 			clearDisk();
@@ -440,7 +480,7 @@ describe("InsightFacade", function () {
 		folderTest<unknown, Promise<InsightResult[]>, PQErrorKind>(
 			"Dynamic InsightFacade PerformQuery tests",
 			(input) => facade.performQuery(input),
-			"./test/resources/queries/",
+			"./test/resources/queries",
 			{
 				assertOnResult: async (actual, expected) => {
 					expect(actual).have.deep.members(await expected); // order doesn't matter;

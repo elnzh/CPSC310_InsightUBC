@@ -24,27 +24,28 @@ export default class InsightFacade implements IInsightFacade {
 	private querybuilder: QueryBuilder;
 	constructor() {
 		console.log("InsightFacadeImpl::init()");
-		 this.querybuilder = new QueryBuilder();
+		this.idAndDatasets = this.loadFromDisk();
+		this.querybuilder = new QueryBuilder();
 	}
 	public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
 		return new Promise<string[]>((resolve, reject) => {
 			if (id === null || id.includes("_") || id.trim().length === 0) {
 				reject(new InsightError("The input id is invalid!"));
-			}
-			if (Object.keys(this.idAndDatasets).includes(id)) {
+			}else if (Object.keys(this.idAndDatasets).includes(id)) {
 				reject(new InsightError("The input id has existed!"));
-			}
-			if (!(kind === InsightDatasetKind.Sections)) {
+			}else if (!(kind === InsightDatasetKind.Sections)) {
 				reject(new InsightError("The input kind is not valid!"));
+			}else{
+				DataSetHelper.addSectionDataset(content).then((r: any) => {
+					this.idAndDatasets[id] = {kind: kind, data: r};
+					return this.writeToFiles();
+				}).then(() => {
+					resolve(Object.keys(this.idAndDatasets));
+				}).catch((error) => {
+					reject(new InsightError("Invalid files."));
+				});
 			}
-			DataSetHelper.addSectionDataset(content).then((r: any) => {
-				this.idAndDatasets[id] = {kind: kind, data: r};
-				return this.writeToFiles();
-			}).then(() => {
-				resolve(Object.keys(this.idAndDatasets));
-			}).catch((error) => {
-				reject(new InsightError("Invalid files."));
-			});
+
 		});
 	}
 
@@ -57,19 +58,18 @@ export default class InsightFacade implements IInsightFacade {
 		return new Promise<string>((resolve, reject) => {
 			if (id === null || id.includes("_") || id.trim().length === 0) {
 				reject(new InsightError("The input id is invalid!"));
-			}
-			if (!Object.keys(this.idAndDatasets).includes(id)) {
+			}else if (!Object.keys(this.idAndDatasets).includes(id)) {
 				reject(new NotFoundError("The input id did not exist!"));
+			}else{
+				delete this.idAndDatasets[id];
+				this.writeToFiles().then(() => {
+					resolve(id);
+				}).catch((err) => {
+					reject(err);
+				});
 			}
-			delete this.idAndDatasets[id];
-			this.writeToFiles().then(() => {
-				resolve(id);
-			}).catch((err) => {
-				reject(err);
-			});
 		});
 	}
-
 	public listDatasets(): Promise<InsightDataset[]> {
 		let list: InsightDataset[] = [];
 		for (const [key, value] of Object.entries(this.idAndDatasets)) {
@@ -82,17 +82,33 @@ export default class InsightFacade implements IInsightFacade {
 		return Promise.resolve(list);
 	}
 
-
 	private id_str: string = "";
 	// private idAndDatasets: {[key: string]: Section[]} = {};
 	private sections: Section[] = [];
+	public loadFromDisk(){
+		if(!fs.existsSync("./data/datasets.json")){
+			return {};
+		}
+		let diskJson = JSON.parse(fs.readFileSync("./data/datasets.json").toString("utf-8"));
+		let ret: {[key: string]: {kind: InsightDatasetKind, data: any[]}} = {};
+		Object.keys(diskJson).forEach(function(key) {
+			// each id is a key
+			let sectionList: Section[] = [];
+			ret[key] = {kind:InsightDatasetKind.Sections, data:[]};
+			ret[key].kind = diskJson[key].kind;
+			for (let r of diskJson[key].data){
+				let s = new Section(r["id"].toString(), r["Course"], r["Title"], r["Professor"], r["Subject"],
+					r["Year"], r["Avg"], r["Pass"], r["Fail"], r["Audit"]);
+				sectionList.push(s);
+			}
+			ret[key].data = sectionList;
+		});
+		// parseSectionsFiles(filePromise: string[])
+		return ret;
 
+	}
 
 	public performQuery(query: unknown): Promise<InsightResult[]> {
-		// console.log(this.idAndDatasets["id1"]);
-		//  return Promise.reject();
-
-
 		let root = this.querybuilder.parseQuery(query);
 		console.log(this.id_str);
 		console.log(this.idAndDatasets.toString());
@@ -120,7 +136,7 @@ export default class InsightFacade implements IInsightFacade {
 					// find the same sections among all the children
 					let temp = this.answerQueryWhere(children[i]);
 					console.log(node.getKey());
-					if(sectionIndex.length === 0){
+					if(sectionIndex.length === 0 && i === 0){
 						sectionIndex.push(...temp);
 					}else{
 						// find the intersection
@@ -196,18 +212,28 @@ export default class InsightFacade implements IInsightFacade {
 	private answerQueryWhereBaseCase(node: QueryTreeNode) {
 		let sectionIndex: number[] = [];
 		if (node.getKey() === "IS") {
+			console.log("IS");
 			let start: boolean = false;
 			let end: boolean = false;
 			let value: string = String(node.getValue());
+			if(value === "*"){
+				console.log("*");
+				sectionIndex = [...Array(this.sections.length).keys()];
+				return sectionIndex;
+			}
 			if(value.startsWith("*")){
+				console.log("*t");
 				value = value.substring(1);
 				start = true;
-			}else if(value.endsWith("*")){
+			}
+			if(value.endsWith("*")){
+				console.log("t*");
 				value = value.substring(0, value.length - 1);
 				end = true;
 			}
+
 			for (let i = 0; i < this.sections.length; i++) {
-				this.handleQueryIs(start, end, i, node, value, sectionIndex);
+				sectionIndex = [...this.handleQueryIs(start, end, i, node, value, sectionIndex)];
 			}
 		} else {
 			let value = node.getKey();
@@ -251,6 +277,7 @@ export default class InsightFacade implements IInsightFacade {
 				sectionIndex.push(i);
 			}
 		}
+		return sectionIndex;
 	}
 
 	public findDuplicate(arr1: number[], arr2: number[]){

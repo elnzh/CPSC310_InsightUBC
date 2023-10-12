@@ -11,12 +11,12 @@ import * as fs from "fs-extra";
 import {QueryTreeNode} from "./QueryTreeNode";
 import {Section} from "./Section";
 import QueryBuilder from "./QueryBuilder";
+import PerformQueryHelper from "./PerformQueryHelper";
 /**
  * This is the main programmatic entry point for the project.
  * Method documentation is in IInsightFacade
  *
  */
-
 
 export default class InsightFacade implements IInsightFacade {
 
@@ -82,8 +82,6 @@ export default class InsightFacade implements IInsightFacade {
 		return Promise.resolve(list);
 	}
 
-	private id_str: string = "";
-	// private idAndDatasets: {[key: string]: Section[]} = {};
 	private sections: Section[] = [];
 	public loadFromDisk(){
 		if(!fs.existsSync("./data/datasets.json")){
@@ -139,7 +137,7 @@ export default class InsightFacade implements IInsightFacade {
 						sectionIndex.push(...temp);
 					}else{
 						// find the intersection
-						sectionIndex = this.findDuplicate(sectionIndex,temp);
+						sectionIndex = PerformQueryHelper.findDuplicate(sectionIndex,temp);
 					}
 				}
 			}else if(node.getKey() === "OR"){
@@ -151,7 +149,7 @@ export default class InsightFacade implements IInsightFacade {
 						sectionIndex.push(...temp);
 					}else{
 						// find the intersection
-						sectionIndex = this.mergeNoDuplicate(sectionIndex,temp);
+						sectionIndex = PerformQueryHelper.mergeNoDuplicate(sectionIndex,temp);
 					}
 				}
 			}else if(node.getKey() === "NOT"){
@@ -159,7 +157,7 @@ export default class InsightFacade implements IInsightFacade {
 				if( node.getChildrenSize() === 1){
 					let arr1 = [...Array(this.sections.length).keys()];  // array = 0,1....length-1
 					let temp = this.answerQueryWhere(children[0]);
-					sectionIndex = this.excludeArr(arr1,temp);
+					sectionIndex = PerformQueryHelper.excludeArr(arr1,temp);
 
 				}else{
 					throw new InsightError("127");
@@ -187,21 +185,34 @@ export default class InsightFacade implements IInsightFacade {
                         "results are supported.");
 				}
 			}else if(n.getKey() === "OPTIONS"){
-				let column = n.getChildren()[0].getValue();
-				let order = n.getChildren()[1].getValue();
-				if(typeof order === "object"){
-					order = order[0];
-				}
-				if(typeof column === "string" || typeof column === "object"){
-					for(let i of colIndex){
-						res.push(this.sections[i].toJson(column, this.querybuilder.getId()));
+				if( n.getChildren().length === 2) {
+					let column = n.getChildren()[0].getValue();
+					let order = n.getChildren()[1].getValue();
+
+					if (typeof order === "object") {
+						order = order[0];
 					}
-					res.sort((a: {[key: string]: any}, b: {[key: string]: any}) => a[
-						this.querybuilder.getId() + "_" + String(order)] > b[this.querybuilder.getId() + "_" +
-					String(order)] ? 1 : -1);
+					if (typeof column === "string" || typeof column === "object") {
+						for (let i of colIndex) {
+							res.push(this.sections[i].toJson(column, this.querybuilder.getId()));
+						}
+						res.sort((a: {[key: string]: any}, b: {[key: string]: any}) => a[
+							this.querybuilder.getId() + "_" + String(order)] > b[this.querybuilder.getId() + "_" +
+						String(order)] ? 1 : -1);
+					} else {
+						throw new InsightError("line 199");
+					}
 				}else{
-					throw new InsightError("line 199");
+					let column = n.getChildren()[0].getValue();
+					if (typeof column === "string" || typeof column === "object") {
+						for (let i of colIndex) {
+							res.push(this.sections[i].toJson(column, this.querybuilder.getId()));
+						}
+					} else {
+						throw new InsightError("line 199");
+					}
 				}
+
 			}else{
 				throw new InsightError("unknown key");
 			}
@@ -279,18 +290,6 @@ export default class InsightFacade implements IInsightFacade {
 		return sectionIndex;
 	}
 
-	public findDuplicate(arr1: number[], arr2: number[]){
-		return arr1.filter((element) => arr2.includes(element));
-	}
 
-	public mergeNoDuplicate(arr1: number[], arr2: number[]){
-		let arr = [...arr1, ...arr2];
-		return [...new Set(arr)];
-	}
-
-	public excludeArr(arr1: number[], ar2: number[]){
-		let arr2 = new Set(ar2);
-		return arr1.filter( (x) => !arr2.has(x) );
-	}
 }
 

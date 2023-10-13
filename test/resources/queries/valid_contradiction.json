@@ -1,0 +1,35 @@
+{
+  "title": "valid_noOrder",
+  "input":{
+    "WHERE": {
+      "AND": [
+        {
+
+          "GT": {
+            "sections_year": 2009
+          }
+        }
+      ,
+
+        {
+          "LT": {
+            "sections_year": 2009
+          }
+        }
+      ]
+
+
+    },
+    "OPTIONS": {
+      "COLUMNS": [
+        "sections_dept",
+        "sections_avg"
+      ]
+    }
+  },
+  "errorExpected": false,
+  "expected":[]
+}
+
+
+

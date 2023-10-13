@@ -85,5 +85,11 @@ export class Section {
 
 	}
 
+	public toString(){
+		return "uuid:" + this.uuid + "\nid: " + this.id + "\ntitle:" + this.title + "\ninstructor: " + this.instructor +
+			"\ndept:" + this.dept + "\nyear: " + this.year + "\navg:" + this.avg + "\npass: " + this.pass +
+			"\nfail:" + this.fail + "\naudit:" + this.audit;
+	}
+
 
 }

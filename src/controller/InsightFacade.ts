@@ -109,6 +109,7 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public performQuery(query: unknown): Promise<InsightResult[]> {
+		// initialize querybuilder
 		this.querybuilder = new QueryBuilder();
 		let root = this.querybuilder.parseQuery(query);
 		let temp = this.idAndDatasets[this.querybuilder.getId()];

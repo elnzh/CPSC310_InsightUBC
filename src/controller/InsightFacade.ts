@@ -22,6 +22,7 @@ export default class InsightFacade implements IInsightFacade {
 
 	private idAndDatasets: {[key: string]: {kind: InsightDatasetKind, data: any[]}} = {};
 	private querybuilder: QueryBuilder;
+	private sections: Section[] = [];
 	constructor() {
 		console.log("InsightFacadeImpl::init()");
 		this.idAndDatasets = this.loadFromDisk();
@@ -82,26 +83,27 @@ export default class InsightFacade implements IInsightFacade {
 		return Promise.resolve(list);
 	}
 
-	private sections: Section[] = [];
+
 	public loadFromDisk(){
 		if(!fs.existsSync("./data/datasets.json")){
 			return {};
 		}
-		let diskJson = JSON.parse(fs.readFileSync("./data/datasets.json").toString("utf-8"));
+		let diskJson = JSON.parse(fs.readFileSync("./data/datasets.json").toString());
 		let ret: {[key: string]: {kind: InsightDatasetKind, data: any[]}} = {};
 		Object.keys(diskJson).forEach(function(key) {
 			// each id is a key
 			let sectionList: Section[] = [];
+
 			ret[key] = {kind:InsightDatasetKind.Sections, data:[]};
 			ret[key].kind = diskJson[key].kind;
+
 			for (let r of diskJson[key].data){
-				let s = new Section(r["id"].toString(), r["Course"], r["Title"], r["Professor"], r["Subject"],
-					r["Year"], r["Avg"], r["Pass"], r["Fail"], r["Audit"]);
+				let s = new Section(r["uuid"], r["id"], r["title"], r["instructor"], r["dept"],
+					r["year"], r["avg"], r["pass"], r["fail"], r["audit"]);
 				sectionList.push(s);
 			}
 			ret[key].data = sectionList;
 		});
-		// parseSectionsFiles(filePromise: string[])
 		return ret;
 
 	}
@@ -114,6 +116,7 @@ export default class InsightFacade implements IInsightFacade {
 			throw new InsightError("Referenced dataset " + this.querybuilder.getId() + " not added yet");
 		}else{
 			this.sections = this.idAndDatasets[this.querybuilder.getId()].data;
+			console.log("this setions" + this.sections.length);
 		}
 
 		let result = this.answerQuery(root);
@@ -122,9 +125,7 @@ export default class InsightFacade implements IInsightFacade {
 
 	}
 	public answerQueryWhere(node: QueryTreeNode){
-		console.log(97);
 		if(node.hasChildren()){
-			console.log(99);
 			// haven't reached the leaves
 			let children = node.getChildren();
 			let sectionIndex: number[] = [];
@@ -132,7 +133,6 @@ export default class InsightFacade implements IInsightFacade {
 				for(let i = 0; i < node.getChildrenSize(); i++) {
 					// find the same sections among all the children
 					let temp = this.answerQueryWhere(children[i]);
-					console.log(node.getKey());
 					if(sectionIndex.length === 0 && i === 0){
 						sectionIndex.push(...temp);
 					}else{
@@ -144,7 +144,6 @@ export default class InsightFacade implements IInsightFacade {
 				for(let i = 0; i < node.getChildrenSize(); i++) {
 					// add all sections among all children
 					let temp = this.answerQueryWhere(children[i]);
-					console.log(117);
 					if(sectionIndex.length === 0){
 						sectionIndex.push(...temp);
 					}else{
@@ -179,7 +178,6 @@ export default class InsightFacade implements IInsightFacade {
 		for(const n of nodes){
 			if(n.getKey() === "WHERE"){
 				colIndex = this.answerQueryWhere(n.getChildren()[0]);
-				console.log("colIndex: " + colIndex.length);
 				if(colIndex.length > 5000){
 					throw new ResultTooLargeError("The result is too big. Only queries with a maximum of 5000 " +
                         "results are supported.");
@@ -239,6 +237,7 @@ export default class InsightFacade implements IInsightFacade {
 			if(value.endsWith("*")){
 				console.log("t*");
 				value = value.substring(0, value.length - 1);
+				console.log(value);
 				end = true;
 			}
 
@@ -274,7 +273,7 @@ export default class InsightFacade implements IInsightFacade {
 				sectionIndex.push(i);
 			}
 		} else if (start) {
-			if (String(this.sections[i].getValue(node.getChildrenString()[0])).endsWith(value)) {
+			if (this.sections[i].getValue(node.getChildrenString()[0]).toString().endsWith(value)) {
 				sectionIndex.push(i);
 			}
 		} else if (end) {
@@ -287,6 +286,7 @@ export default class InsightFacade implements IInsightFacade {
 				sectionIndex.push(i);
 			}
 		}
+
 		return sectionIndex;
 	}
 

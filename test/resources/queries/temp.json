@@ -1,0 +1,30 @@
+{
+	"title": "temp",
+	"input":{
+		"WHERE": {
+			"AND": [
+				{
+					"EQ": {
+						"sections_year": 1900
+					}
+				},
+				{
+					"NOT": {
+						"EQ": {
+							"sections_year": 1900
+						}
+					}
+				}
+			]
+		},
+		"OPTIONS": {
+			"COLUMNS": [
+				"sections_avg",
+				"sections_avg"
+			]
+		}
+	},
+
+	"errorExpected": false,
+	"expected": []
+}

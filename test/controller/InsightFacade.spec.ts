@@ -449,9 +449,15 @@ describe("InsightFacade", function () {
 			return Promise.all(loadDatasetPromises);
 		});
 
+		// it("crashes in perform query",async function(){
+        //     facade = new InsightFacade();
+		//
+		// });
+
 
 		it("should check for order and make sure order is deep equal", async function(){
 			try{
+				facade = new InsightFacade();
 				const result = await facade.performQuery({
 					WHERE: {
 						AND: [{

@@ -21,6 +21,7 @@ export class QueryTreeNode {
 	public getChildren(){
 		return this.children;
 	}
+
 	public addChildren(child: QueryTreeNode){
 		this.children.push(child);
 	}
@@ -31,6 +32,7 @@ export class QueryTreeNode {
 		}
 		return true;
 	}
+
 	public setValue(val: number|string|string[]|undefined){
 		this.value = val;
 	}
@@ -38,9 +40,11 @@ export class QueryTreeNode {
 	public getValue(){
 		return this.value;
 	}
+
 	public setChildrenString(str: string){
 		this.childrenStr.push(str);
 	}
+
 	public getChildrenString(){
 		return this.childrenStr;
 	}
@@ -76,14 +80,17 @@ export class QueryTreeNode {
 	public isKeyOptions(){
 		return this.key === "OPTIONS";
 	}
+
 	public isKeyColumns(){
 		return this.key === "COLUMNS";
 	}
+
 	public isKeyOrder(){
 		return this.key === "ORDER";
 	}
+
 	public isKeyKey(){
-		 return this.key.indexOf("_") > -1;
+		return this.key.indexOf("_") > -1;
 	}
 
 

@@ -12,6 +12,7 @@ export default class QueryBuilder{
 	constructor(){
 		this.id_str = "";
 	}
+
 	public parseQuery(query: unknown) {
         // check if query is a valid query
 		if(query === null || query === undefined || typeof query !== "object" ) {

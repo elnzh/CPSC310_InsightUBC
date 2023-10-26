@@ -1,0 +1,7 @@
+{
+	"title": "invalid ORDER type",
+	"input":,
+	"errorExpected": true,
+	"expected":"InsightError"
+
+}

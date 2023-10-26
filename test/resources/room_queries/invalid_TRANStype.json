@@ -1,0 +1,7 @@
+{
+	"title": "TRANSFORMATIONS not well typed",
+	"input":{"WHERE":{"AND":[{"IS":{"rooms_furniture":"*Tables*"}},{"GT":{"rooms_seats":300}}]},"OPTIONS":{"COLUMNS":["rooms_shortname","maxSeats"],"ORDER":{"dir":"UP","keys":["maxSeats"]}},"TRANSFORMATIONS":[]},
+	"errorExpected": true,
+	"expected":"InsightError"
+
+}

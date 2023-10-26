@@ -572,5 +572,25 @@ describe("InsightFacade", function () {
 				},
 			}
 		);
+
+		folderTest<unknown, Promise<InsightResult[]>, PQErrorKind>(
+			"Dynamic InsightFacade PerformQuery tests - rooms",
+			(input) => facade.performQuery(input),
+			"./test/resources/room_queries",
+			{
+				assertOnResult: async (actual, expected) => {
+					expect(actual).have.deep.members(await expected); // order doesn't matter;
+				},
+				errorValidator: (error): error is PQErrorKind =>
+					error === "ResultTooLargeError" || error === "InsightError",
+				assertOnError: (actual, expected) => {
+					if (expected === "ResultTooLargeError") {
+						expect(actual).to.be.an.instanceOf(ResultTooLargeError);
+					} else {
+						expect(actual).to.be.an.instanceOf(InsightError);
+					}
+				},
+			}
+		);
 	});
 });

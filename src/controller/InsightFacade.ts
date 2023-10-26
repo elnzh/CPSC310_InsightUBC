@@ -28,6 +28,7 @@ export default class InsightFacade implements IInsightFacade {
 		this.idAndDatasets = this.loadFromDisk();
 		this.querybuilder = new QueryBuilder();
 	}
+
 	public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
 		return new Promise<string[]>((resolve, reject) => {
 			if (id === null || id.includes("_") || id.trim().length === 0) {
@@ -71,6 +72,7 @@ export default class InsightFacade implements IInsightFacade {
 			}
 		});
 	}
+
 	public listDatasets(): Promise<InsightDataset[]> {
 		let list: InsightDataset[] = [];
 		for (const [key, value] of Object.entries(this.idAndDatasets)) {
@@ -109,7 +111,7 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public performQuery(query: unknown): Promise<InsightResult[]> {
-		// initialize querybuilder
+		// gitinitialize querybuilder
 		this.querybuilder = new QueryBuilder();
 		let root = this.querybuilder.parseQuery(query);
 		let temp = this.idAndDatasets[this.querybuilder.getId()];
@@ -125,6 +127,7 @@ export default class InsightFacade implements IInsightFacade {
 		return Promise.resolve(result);
 
 	}
+
 	public answerQueryWhere(node: QueryTreeNode){
 		if(node.hasChildren()){
 			// haven't reached the leaves
@@ -218,6 +221,7 @@ export default class InsightFacade implements IInsightFacade {
 		}
 		return res;
 	}
+
 	private answerQueryWhereBaseCase(node: QueryTreeNode) {
 		let sectionIndex: number[] = [];
 		if (node.getKey() === "IS") {
@@ -266,9 +270,8 @@ export default class InsightFacade implements IInsightFacade {
 		return sectionIndex;
 	}
 
-
 	private handleQueryIs(start: boolean, end: boolean, i: number, node: QueryTreeNode,
-						  value: string, sectionIndex: number[]) {
+		value: string, sectionIndex: number[]) {
 		if (start && end) {
 			if (String(this.sections[i].getValue(node.getChildrenString()[0])).includes(value)) {
 				sectionIndex.push(i);

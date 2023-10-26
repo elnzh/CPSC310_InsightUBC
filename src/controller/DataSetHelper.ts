@@ -50,4 +50,4 @@ export default class DataSetHelper {
 		}
 		return sectionList;
 	}
-};
+}

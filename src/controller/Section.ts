@@ -12,8 +12,18 @@ export class Section {
 	private fail: number;
 	private audit: number;
 
-	constructor(uuid: string, id: string, title: string,instructor: string, dept: string, year: number,
-		avg: number, pass: number, fail: number, audit: number){
+	constructor(
+		uuid: string,
+		id: string,
+		title: string,
+		instructor: string,
+		dept: string,
+		year: number,
+		avg: number,
+		pass: number,
+		fail: number,
+		audit: number
+	) {
 		this.uuid = uuid;
 		this.id = id;
 		this.title = title;
@@ -26,48 +36,46 @@ export class Section {
 		this.audit = audit;
 	}
 
-	public getValue(key: string){
-		if(key === "uuid"){
+	public getValue(key: string) {
+		if (key === "uuid") {
 			return this.uuid;
-		}else if(key === "id"){
+		} else if (key === "id") {
 			return this.id;
-		}else if(key === "title"){
+		} else if (key === "title") {
 			return this.title;
-		}else if(key === "instructor"){
+		} else if (key === "instructor") {
 			return this.instructor;
-		}else if(key === "dept"){
+		} else if (key === "dept") {
 			return this.dept;
-		}else if(key === "year"){
+		} else if (key === "year") {
 			return this.year;
-		}else if(key === "avg"){
+		} else if (key === "avg") {
 			return this.avg;
-		}else if(key === "pass"){
+		} else if (key === "pass") {
 			return this.pass;
-		}else if(key === "fail"){
+		} else if (key === "fail") {
 			return this.fail;
-		}else if(key === "audit"){
+		} else if (key === "audit") {
 			return this.audit;
-		}else{
+		} else {
 			throw new InsightError();
 		}
 	}
 
-
-	public toJson(keylist: string|string[]|undefined, id: string){
-		if (typeof keylist === "object"){
-			let ret: {[key: string]: string|number;} = {};
-			for(let i of keylist){
-				ret[id + "_"  + i] = this.getValue(i);
+	public toJson(keylist: string | string[] | undefined, id: string) {
+		if (typeof keylist === "object") {
+			let ret: {[key: string]: string | number} = {};
+			for (let i of keylist) {
+				ret[id + "_" + i] = this.getValue(i);
 			}
 			return ret;
-
-		}else if(typeof keylist === "string"){
-			let temp = id + "_"  + keylist;
-			return{
-				temp:  this.getValue(keylist)
+		} else if (typeof keylist === "string") {
+			let temp = id + "_" + keylist;
+			return {
+				temp: this.getValue(keylist),
 			};
-		}else{
-			let ret: {[key: string]: string|number;} = {};
+		} else {
+			let ret: {[key: string]: string | number} = {};
 			let pref = id + "_";
 			ret[pref + "uuid"] = this.uuid;
 			ret[pref + "id"] = this.id;
@@ -80,16 +88,31 @@ export class Section {
 			ret[pref + "fail"] = this.fail;
 			ret[pref + "audit"] = this.audit;
 			return ret;
-
 		}
-
 	}
 
-	public toString(){
-		return "uuid:" + this.uuid + "\nid: " + this.id + "\ntitle:" + this.title + "\ninstructor: " + this.instructor +
-			"\ndept:" + this.dept + "\nyear: " + this.year + "\navg:" + this.avg + "\npass: " + this.pass +
-			"\nfail:" + this.fail + "\naudit:" + this.audit;
+	public toString() {
+		return (
+			"uuid:" +
+			this.uuid +
+			"\nid: " +
+			this.id +
+			"\ntitle:" +
+			this.title +
+			"\ninstructor: " +
+			this.instructor +
+			"\ndept:" +
+			this.dept +
+			"\nyear: " +
+			this.year +
+			"\navg:" +
+			this.avg +
+			"\npass: " +
+			this.pass +
+			"\nfail:" +
+			this.fail +
+			"\naudit:" +
+			this.audit
+		);
 	}
-
-
 }

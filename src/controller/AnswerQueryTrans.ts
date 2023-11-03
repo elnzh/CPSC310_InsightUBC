@@ -2,6 +2,7 @@ import {Section} from "./Section";
 import {Room} from "./Room";
 import {QueryTreeNode} from "./QueryTreeNode";
 import {InsightDatasetKind, InsightError} from "./IInsightFacade";
+import Decimal from "decimal.js";
 
 export default class AnswerQueryTrans {
 
@@ -169,16 +170,17 @@ export default class AnswerQueryTrans {
 
 	public calculateAVG(datasets: Section[]|Room[], key: string){
 		let size: number = datasets.length;
-		let total: number = 0.000;
+		let total = new Decimal(0);
 		for(let i in datasets){
 			let val = datasets[i].getValue(key);
 			if(typeof val === "string"){
 				throw new InsightError("AVG wrong key");
 			}else{
-				total = total + val;
+				total = total.add(new Decimal(datasets[i].getValue(key)));
 			}
 		}
-		return Math.round( (total / size) * 1e2 ) / 1e2;
+		let avg = total.toNumber() / size;
+		return Number(avg.toFixed(2));
 	}
 
 	public calculateMIN(datasets: Section[]|Room[], key: string){
@@ -220,16 +222,16 @@ export default class AnswerQueryTrans {
 	}
 
 	public calculateSUM(datasets: Section[]|Room[], key: string){
-		let total = 0.0;
+		let total = new Decimal(0);
 		for(let i in datasets){
-			let val = datasets[i].getValue(key);
-			if(typeof val === "string"){
+			if(typeof datasets[i].getValue(key) === "string"){
 				throw new InsightError("SUM wrong key");
 			}else{
-				total = total + val;
+				let n = new Decimal(datasets[i].getValue(key));
+				total = total.add(n);
 			}
 		}
-		return total;
+		return Number(total.toFixed(2));
 	}
 
 	public findCOUNT(datasets: Section[]|Room[], key: string){

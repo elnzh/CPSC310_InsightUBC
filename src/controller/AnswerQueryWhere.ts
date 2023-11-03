@@ -57,7 +57,7 @@ export default class AnswerQueryWhere{
 					}
 				}
 			}else if(node.getKey() === "NOT"){
-				console.log(node.getKey());
+				// console.log(node.getKey());
 				if( node.getChildrenSize() === 1){
 					let arr1: number[];
 					if(this.type === InsightDatasetKind.Sections){
@@ -84,12 +84,12 @@ export default class AnswerQueryWhere{
 	private answerQueryWhereBaseCase(node: QueryTreeNode) {
 		let sectionIndex: number[] = [];
 		if (node.getKey() === "IS") {
-			console.log("IS");
+			// console.log("IS");
 			let start: boolean = false;
 			let end: boolean = false;
 			let value: string = String(node.getValue());
 			if(value === "*"){
-				console.log("*");
+				// console.log("*");
 				if(this.type === InsightDatasetKind.Sections){
 					sectionIndex = [...Array(this.sections.length).keys()];
 				}else{
@@ -99,14 +99,14 @@ export default class AnswerQueryWhere{
 				return sectionIndex;
 			}
 			if(value.startsWith("*")){
-				console.log("*t");
+				// console.log("*t");
 				value = value.substring(1);
 				start = true;
 			}
 			if(value.endsWith("*")){
-				console.log("t*");
+				// console.log("t*");
 				value = value.substring(0, value.length - 1);
-				console.log(value);
+				// console.log(value);
 				end = true;
 			}
 			// sectionIndex = [...Array(this.getDataset().length).keys()];

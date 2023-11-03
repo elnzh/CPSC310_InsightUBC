@@ -17,7 +17,7 @@ export default class QueryTransformationBuilder{
 
 	public checkTransformationTypeKey(parsedTrans: any){
 		if(typeof parsedTrans !== "object" ){
-			console.log("Transformations must be object");
+			// console.log("Transformations must be object");
 			throw new InsightError();
 		}
 		for(let key in parsedTrans){

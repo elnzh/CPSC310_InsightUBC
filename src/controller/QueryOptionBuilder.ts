@@ -19,7 +19,7 @@ export default class QueryOptionBuilder {
 
 	public checkOptionTypeKey(parsedOption: any){
 		if(typeof parsedOption !== "object" || parsedOption instanceof Array){
-			console.log("line 103 OPTIONS must be object");
+			// console.log("line 103 OPTIONS must be object");
 			throw new InsightError();
 		}
 	}
@@ -67,7 +67,7 @@ export default class QueryOptionBuilder {
 
 	private handleOrderStr(order: string, columns: string[], root: QueryTreeNode){
 		if (!columns.includes(order)) {
-			console.log("ORDER key must be in COLUMNS");
+			// console.log("ORDER key must be in COLUMNS");
 			throw new InsightError();
 		}
 		let str = this.getOrderKeyNoUnderScore(String(order));
@@ -102,8 +102,8 @@ export default class QueryOptionBuilder {
 				let tempArr: string[] = [];
 				for(let k in Array(keys)){
 					if (!columns.includes(keys[k])){
-						console.log(keys);
-						console.log(k);
+						// console.log(keys);
+						// console.log(k);
 						throw new InsightError("ORDER key must be in COLUMNS");
 					}else{
 						let str = this.getOrderKeyNoUnderScore(keys[k]);

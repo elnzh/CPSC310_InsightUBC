@@ -27,19 +27,19 @@ export default class QueryBuilder{
 	public parseQuery(query: unknown) {
         // check if query is a valid query
 		if(query === null || query === undefined || typeof query !== "object" ) {
-			console.log("line 65 arg error");
+			// console.log("line 65 arg error");
 			throw new InsightError();
 		}
 		let parsed;
 		try{
 			parsed = JSON.parse(JSON.stringify(query));
-			console.log(parsed);
+			// console.log(parsed);
 		}catch(err){
-			console.log("line 74 invalid query string");
+			// console.log("line 74 invalid query string");
 			throw new InsightError("invalid query string");
 		}
 		if(parsed === undefined || parsed.WHERE === undefined || parsed.OPTIONS === undefined){
-			console.log("line 79 query error");
+			// console.log("line 79 query error");
 			throw new InsightError();
 		}
 		let root = new QueryTreeNode("ROOT", undefined);

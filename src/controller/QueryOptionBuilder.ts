@@ -177,5 +177,12 @@ export default class QueryOptionBuilder {
 		return str;
 	}
 
+	public getId(){
+		return this.id;
+	}
+
+	public getType(){
+		return this.type;
+	}
 
 }

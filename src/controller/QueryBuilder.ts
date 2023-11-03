@@ -68,9 +68,13 @@ export default class QueryBuilder{
 		let options = this.optionBuilder.buildOption(parsed.OPTIONS, parsed.OPTIONS.COLUMNS,
 			parsed.OPTIONS.ORDER, this.id_str, this.type_str, this.applyKey_col,
 			this.transBuilder.getGroupKeyCol());
+		if(this.id_str === ""){
+			this.id_str =  this.optionBuilder.getId();
+		}
+		if(this.type_str === undefined){
+			this.type_str =  this.optionBuilder.getType();
+		}
 		root.addChildren(options);
-
-
 		return root;
 
 	}

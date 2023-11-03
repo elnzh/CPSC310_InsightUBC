@@ -483,7 +483,7 @@ describe("InsightFacade", function () {
 	 * You can still make tests the normal way, this is just a convenient tool for a majority of queries.
 	 */
 	describe("PerformQuery", () => {
-		before(function () {
+		before( function () {
 			console.info(`Before: ${this.test?.parent?.title}`);
 
 			facade = new InsightFacade();
@@ -496,10 +496,9 @@ describe("InsightFacade", function () {
 			// ];
 
 			const loadDatasetPromises = [
-				facade.addDataset("sections", sections, InsightDatasetKind.Sections),
-				// facade.addDataset("rooms", rooms, InsightDatasetKind.Rooms),
+				// facade.addDataset("sections", sections, InsightDatasetKind.Sections),
+				facade.addDataset("rooms", rooms, InsightDatasetKind.Rooms)
 			];
-
 
 			return Promise.all(loadDatasetPromises);
 		});
@@ -607,7 +606,7 @@ describe("InsightFacade", function () {
 
 
 		it("sample", async function() {
-			facade = new InsightFacade();
+			// facade = new InsightFacade();
 			const result = await facade.performQuery({
 				WHERE: {
 					IS: {
@@ -647,6 +646,53 @@ describe("InsightFacade", function () {
 				{sections_id:"599"}]);
 		});
 
+		it("sample2", async function() {
+			// facade = new InsightFacade();
+			const result = await facade.performQuery({
+				WHERE: {
+					AND: [
+						{
+							IS: {
+								rooms_furniture: "*Tables*"
+							}
+						},
+						{
+							GT: {
+								rooms_seats: 300
+							}
+						}
+					]
+				},
+				OPTIONS: {
+					COLUMNS: [
+						"rooms_shortname",
+						"maxSeats"
+					],
+					ORDER: {
+						dir: "DOWN",
+						keys: [
+							"maxSeats"
+						]
+					}
+				},
+				TRANSFORMATIONS: {
+					GROUP: [
+						"rooms_shortname"
+					],
+					APPLY: [
+						{
+							maxSeats: {
+								MAX: "rooms_seats"
+							}
+						}
+					]
+				}
+			});
+			expect(result).have.deep.members([{rooms_shortname:"OSBO",maxSeats:442},
+				{rooms_shortname:"HEBB",maxSeats:375},{rooms_shortname:"LSC",maxSeats:350}]
+			);
+		});
+
 		after(function () {
 			console.info(`After: ${this.test?.parent?.title}`);
 			clearDisk();
@@ -654,25 +700,25 @@ describe("InsightFacade", function () {
 
 		type PQErrorKind = "ResultTooLargeError" | "InsightError";
 
-		// folderTest<unknown, Promise<InsightResult[]>, PQErrorKind>(
-		// 	"Dynamic InsightFacade PerformQuery tests",
-		// 	(input) => facade.performQuery(input),
-		// 	"./test/resources/queries",
-		// 	{
-		// 		assertOnResult: async (actual, expected) => {
-		// 			expect(actual).have.deep.members(await expected); // order doesn't matter;
-		// 		},
-		// 		errorValidator: (error): error is PQErrorKind =>
-		// 			error === "ResultTooLargeError" || error === "InsightError",
-		// 		assertOnError: (actual, expected) => {
-		// 			if (expected === "ResultTooLargeError") {
-		// 				expect(actual).to.be.an.instanceOf(ResultTooLargeError);
-		// 			} else {
-		// 				expect(actual).to.be.an.instanceOf(InsightError);
-		// 			}
-		// 		},
-		// 	}
-		// );
+		folderTest<unknown, Promise<InsightResult[]>, PQErrorKind>(
+			"Dynamic InsightFacade PerformQuery tests",
+			(input) => facade.performQuery(input),
+			"./test/resources/queries",
+			{
+				assertOnResult: async (actual, expected) => {
+					expect(actual).have.deep.members(await expected); // order doesn't matter;
+				},
+				errorValidator: (error): error is PQErrorKind =>
+					error === "ResultTooLargeError" || error === "InsightError",
+				assertOnError: (actual, expected) => {
+					if (expected === "ResultTooLargeError") {
+						expect(actual).to.be.an.instanceOf(ResultTooLargeError);
+					} else {
+						expect(actual).to.be.an.instanceOf(InsightError);
+					}
+				},
+			}
+		);
 
 		folderTest<unknown, Promise<InsightResult[]>, PQErrorKind>(
 			"Dynamic InsightFacade PerformQuery tests - rooms",

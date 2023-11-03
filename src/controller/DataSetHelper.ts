@@ -143,7 +143,7 @@ export default class DataSetHelper {
 		return buildings;
 	}
 
-	private static generateRoom(node: any, buildingName: string): any {
+	private static generateRoom(node: any, buildingName: string): Room {
 		const room: any = {fullname: buildingName};
 		for (const childNode of node.childNodes) {
 			if (childNode.nodeName === "td") {
@@ -167,7 +167,8 @@ export default class DataSetHelper {
 				}
 			}
 		}
-		return room;
+		return new Room(buildingName, room["number"], room["seats"], room["furniture"], room["type"]);
+		// return room;
 	}
 
 	private static mapRoomstoBuilding(rooms: any[], buildings: any[]): void {
@@ -176,12 +177,19 @@ export default class DataSetHelper {
 				return room["fullname"] === building["fullname"];
 			});
 			for (const room of roomsInBuilding) {
-				room["shortname"] = building["shortname"];
-				room["address"] = building["address"];
-				room["href"] = building["href"];
-				room["name"] = room["shortname"] + "_" + room["number"];
-				room["lat"] = building["lat"];
-				room["lon"] = building["lon"];
+				if(room instanceof Room){
+					let name = room.getValue("shortname") + "_" + room.getValue("number");
+					room.setBuildingValue(building["shortname"], name, building["address"], building["href"],
+						building["lat"], building["lon"]);
+				}else{
+					throw new InsightError("dataset helper 185");
+				}
+				// room["shortname"] = building["shortname"];
+				// room["address"] = building["address"];
+				// room["href"] = building["href"];
+				// room["name"] = room["shortname"] + "_" + room["number"];
+				// room["lat"] = building["lat"];
+				// room["lon"] = building["lon"];
 			}
 		}
 	}

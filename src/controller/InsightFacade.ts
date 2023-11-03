@@ -120,16 +120,26 @@ export default class InsightFacade implements IInsightFacade {
 		Object.keys(diskJson).forEach(function (key) {
 			// each id is a key
 			let sectionList: Section[] = [];
+			let roomList: Room[] = [];
 
-			ret[key] = {kind: InsightDatasetKind.Sections, data: []};
-			ret[key].kind = diskJson[key].kind;
-
-			for (let r of diskJson[key].data) {
-				let s = new Section(r["uuid"], r["id"], r["title"], r["instructor"], r["dept"],
-					r["year"], r["avg"], r["pass"], r["fail"], r["audit"]);
-				sectionList.push(s);
+			ret[key] = {kind: diskJson[key].kind, data: []};
+			// ret[key].kind = diskJson[key].kind;
+			if (diskJson[key].kind === InsightDatasetKind.Sections){
+				for (let r of diskJson[key].data) {
+					let s = new Section(r["uuid"], r["id"], r["title"], r["instructor"], r["dept"],
+						r["year"], r["avg"], r["pass"], r["fail"], r["audit"]);
+					sectionList.push(s);
+				}
+				ret[key].data = sectionList;
+			}else if(diskJson[key].kind === InsightDatasetKind.Rooms){
+				for (let i of diskJson[key].data) {
+					let r = new Room(i["fullname"], i["number"],i["seats"], i["furniture"], i["type"]);
+					r.setBuildingValue(i["shortname"],i["name"],i["address"], i["href"], i["lat"], i["lon"]);
+					roomList.push(r);
+				}
+				ret[key].data = roomList;
 			}
-			ret[key].data = sectionList;
+
 		});
 		return ret;
 
@@ -146,6 +156,7 @@ export default class InsightFacade implements IInsightFacade {
 			this.kind = queryKind;
 		}
 		let temp = this.idAndDatasets[this.querybuilder.getId()];
+		// console.log(this.idAndDatasets);
 		if (temp === undefined) {
 			throw new InsightError("Referenced dataset " + this.querybuilder.getId() + " not added yet");
 		} else {
@@ -157,23 +168,22 @@ export default class InsightFacade implements IInsightFacade {
 				this.sections = this.idAndDatasets[this.querybuilder.getId()].data;
 			} else {
 				this.rooms = this.idAndDatasets[this.querybuilder.getId()].data;
-				// console.log("room check:" + this.rooms.length);
+				// console.log("room check:" + this.rooms[0]);
 			}
 		}
-		// console.log(root.toString());
+		console.log(root.toString());
 		let result = this.answerQuery(root);
-		// console.log(result);
+		console.log(result);
 		return Promise.resolve(result);
 	}
 
-	public getDatasets() {
+	public getDatasetLength(){
 		if (this.kind === InsightDatasetKind.Sections) {
-			return this.sections;
+			return this.sections.length;
 		} else {
-			return this.rooms;
+			return this.rooms.length;
 		}
 	}
-
 
 	public answerQuery(node: QueryTreeNode) {
 		let nodes = node.getChildren();
@@ -188,7 +198,7 @@ export default class InsightFacade implements IInsightFacade {
 		for (const n of nodes) {
 			if (n.getKey() === "WHERE") {
 				if (n.getChildren().length === 0) {
-					colIndex = Array.from(Array(this.getDatasets().length).keys());
+					colIndex = Array.from(Array(this.getDatasetLength()).keys());
 				} else {
 					colIndex = where.handleWhere(n.getChildren()[0]);
 				}
@@ -199,22 +209,22 @@ export default class InsightFacade implements IInsightFacade {
 					res = option.optionNoTrans(n, colIndex, res);
 				} else {
 					let column = n.getChildren()[0].getValue();
-					// console.log(column);
 					if (typeof column !== "string" && !Array.isArray(column)) {
 						throw new InsightError("col type error");
 					}
 					let transRes: [{[key: string]: number | string;}] = trans.getTransformedList();
 					let tempRes: InsightResult[] = [];
-					// console.log("start " + transRes.length);
 					this.extracted(transRes, column, tempRes);
 					if (n.getChildren().length === 2) {
 						let order = n.getChildren()[1];
-						let dir = order.getChildren()[0].getValue();
-						let keys = order.getChildren()[1].getValue();
-						if (typeof dir !== "string" || typeof keys !== "object" || !Array.isArray(keys)) {
-							throw new InsightError("order type invalid");
+						if(order.hasChildren()){
+							res = this.orderHasChildren(order, option, tempRes);
+						}else{
+							let key = this.getKey(order);
+							let arr = [];
+							arr.push(key);
+							res = option.handleOrder("UP", arr, tempRes);
 						}
-						res = option.handleOrder(dir, keys, tempRes);
 					} else {
 						return tempRes;
 					}
@@ -224,6 +234,23 @@ export default class InsightFacade implements IInsightFacade {
 			}
 		}
 		return res;
+	}
+
+	private getKey(order: QueryTreeNode) {
+		let key = order.getValue();
+		if (typeof key !== "string") {
+			throw new InsightError("order type invalid");
+		}
+		return key;
+	}
+
+	private orderHasChildren(order: QueryTreeNode, option: AnswerQueryOption, tempRes: InsightResult[]) {
+		let dir = order.getChildren()[0].getValue();
+		let keys = order.getChildren()[1].getValue();
+		if (typeof dir !== "string" || typeof keys !== "object" || !Array.isArray(keys)) {
+			throw new InsightError("order type invalid");
+		}
+		return option.handleOrder(dir, keys, tempRes);
 	}
 
 	private transform(trans: AnswerQueryTrans, colIndex: number[], n: QueryTreeNode) {

@@ -8,6 +8,7 @@ import {Room} from "./Room";
 import QueryOptionBuilder from "./QueryOptionBuilder";
 import QueryTransformationBuilder from "./QueryTransformationBuilder";
 
+
 export default class QueryBuilder{
 
 	private id_str: string;
@@ -17,6 +18,7 @@ export default class QueryBuilder{
 	private optionBuilder: QueryOptionBuilder;
 	private transBuilder: QueryTransformationBuilder;
 	constructor(){
+
 		this.id_str = "";
 		this.applyKey_col = [];
 		this.whereBuilder = new QueryWhereBuilder();
@@ -25,20 +27,24 @@ export default class QueryBuilder{
 	}
 
 	public parseQuery(query: unknown) {
-        // check if query is a valid query
-		if(query === null || query === undefined || typeof query !== "object" ) {
+		// check if query is a valid query
+		if (query === null || query === undefined || typeof query !== "object") {
 			console.log("line 65 arg error");
 			throw new InsightError();
 		}
 		let parsed;
+
 		try{
+
 			parsed = JSON.parse(JSON.stringify(query));
 			console.log(parsed);
-		}catch(err){
+		} catch (err) {
 			console.log("line 74 invalid query string");
 			throw new InsightError("invalid query string");
 		}
+
 		if(parsed === undefined || parsed.WHERE === undefined || parsed.OPTIONS === undefined){
+
 			console.log("line 79 query error");
 			throw new InsightError();
 		}
@@ -46,6 +52,7 @@ export default class QueryBuilder{
 		this.whereBuilder.checkWhereTypeKey(parsed.WHERE);
 		let where = this.whereBuilder.buildWhere(parsed.WHERE);
 		root.addChildren(where);
+
 		this.id_str = this.whereBuilder.getId();
 		this.type_str = this.whereBuilder.getType();
 		let trans: QueryTreeNode|undefined;
@@ -60,8 +67,10 @@ export default class QueryBuilder{
 			}
 			if(this.type_str === undefined){
 				this.type_str =  this.transBuilder.getType();
+
 			}
 		}
+
 
 		this.optionBuilder.checkOptionTypeKey(parsed.OPTIONS);
 		PerformQueryHelper.checkIsNonEmptyArray(parsed.OPTIONS.COLUMNS);
@@ -75,13 +84,20 @@ export default class QueryBuilder{
 
 	}
 
-	public getId(){
-		return this.id_str;
+	private checkUnderscoreInStr(index: number, str: string) {
+		if (index === -1) {
+			throw new InsightError("no underscore in key");
+		}
+		if ((str.match(/_/g) || []).length > 1) {
+			throw new InsightError("more than 1 underscore in key");
+		}
 	}
+
 
 	public getType(){
 		return this.type_str;
 	}
+
 
 
 }

@@ -67,6 +67,7 @@ export class Room {
 		}
 	}
 
+
 	public static isMfield(str: string){
 		if(str === "lat" || str === "lon" || str === "seats"){
 			return true;
@@ -117,5 +118,6 @@ export class Room {
 		}
 
 	}
+
 
 }

@@ -1,0 +1,46 @@
+{
+	"title": "Invalid key sections_furniture in IS",
+	"input":{
+		"WHERE": {
+			"AND": [
+				{
+					"IS": {
+						"sections_furniture": "*Tables*"
+					}
+				},
+				{
+					"GT": {
+						"sections_seats": 0
+					}
+				}
+			]
+		},
+		"OPTIONS": {
+			"COLUMNS": [
+				"sections_type",
+				"maxSeats"
+			],
+			"ORDER": {
+				"dir": "UP",
+				"keys": [
+					"maxSeats"
+				]
+			}
+		},
+		"TRANSFORMATIONS": {
+			"GROUP": [
+				"sections_type"
+			],
+			"APPLY": [
+				{
+					"maxSeats": {
+						"COUNT": "sections_seats"
+					}
+				}
+			]
+		}
+	},
+	"errorExpected": true,
+	"expected":"InsightError"
+
+}

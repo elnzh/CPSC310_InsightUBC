@@ -19,7 +19,9 @@ export class QueryTreeNode {
 		return this.children;
 	}
 
-	public addChildren(child: QueryTreeNode) {
+
+	public addChildren(child: QueryTreeNode){
+
 		this.children.push(child);
 	}
 
@@ -30,7 +32,8 @@ export class QueryTreeNode {
 		return true;
 	}
 
-	public setValue(val: number | string | string[] | undefined) {
+	public setValue(val: number|string|string[]|undefined){
+
 		this.value = val;
 	}
 
@@ -38,11 +41,13 @@ export class QueryTreeNode {
 		return this.value;
 	}
 
-	public setChildrenString(str: string) {
+
+	public setChildrenString(str: string){
 		this.childrenStr.push(str);
 	}
 
-	public getChildrenString() {
+	public getChildrenString(){
+
 		return this.childrenStr;
 	}
 
@@ -69,23 +74,5 @@ export class QueryTreeNode {
 		return s;
 	}
 
-	public isKeyWhere() {
-		return this.key === "WHERE";
-	}
 
-	public isKeyOptions() {
-		return this.key === "OPTIONS";
-	}
-
-	public isKeyColumns() {
-		return this.key === "COLUMNS";
-	}
-
-	public isKeyOrder() {
-		return this.key === "ORDER";
-	}
-
-	public isKeyKey() {
-		return this.key.indexOf("_") > -1;
-	}
 }

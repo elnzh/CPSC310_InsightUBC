@@ -1,0 +1,51 @@
+{
+  "title":"valid 3",
+  "input": {
+    "WHERE": {
+      "AND": [
+        {
+          "IS": {
+            "rooms_furniture": "*Tables*"
+          }
+        },
+        {
+          "GT": {
+            "rooms_seats": 0
+          }
+        }
+      ]
+    },
+    "OPTIONS": {
+      "COLUMNS": [
+        "rooms_type",
+        "maxSeats"
+      ],
+      "ORDER": {
+        "dir": "UP",
+        "keys": [
+          "maxSeats",
+          "rooms_type"
+        ]
+      }
+    },
+    "TRANSFORMATIONS": {
+      "GROUP": [
+        "rooms_type"
+      ],
+      "APPLY": [
+        {
+          "maxSeats": {
+            "COUNT": "rooms_seats"
+          }
+        },
+        {
+          "roomsype": {
+            "COUNT": "rooms_seats"
+          }
+        }
+      ]
+    }
+  },
+  "errorExpected": false,
+  "expected":[{"rooms_type":"Active Learning","maxSeats":2},{"rooms_type":"TBD","maxSeats":2},{"rooms_type":"Case Style","maxSeats":15},{"rooms_type":"Open Design General Purpose","maxSeats":26},{"rooms_type":"Small Group","maxSeats":28},{"rooms_type":"Tiered Large Group","maxSeats":28}]
+}

@@ -6,14 +6,21 @@ import {
 	InsightResult,
 	NotFoundError,
 	ResultTooLargeError,
+
 } from "./IInsightFacade";
 import DataSetHelper from "./DataSetHelper";
 import * as fs from "fs-extra";
 import {QueryTreeNode} from "./QueryTreeNode";
+import {Room} from "./Room";
 import {Section} from "./Section";
 import QueryBuilder from "./QueryBuilder";
-import PerformQueryHelper from "./PerformQueryHelper";
+import AnswerQueryWhere from "./AnswerQueryWhere";
+import AnswerQueryTrans from "./AnswerQueryTrans";
 import InsightFacadeDatasetHelper from "./InsightFacadeDatasetHelper";
+import PerformQueryHelper from "./PerformQueryHelper";
+import AnswerQueryOption from "./AnswerQueryOption";
+import InsightFacadeDatasetHelper from "./InsightFacadeDatasetHelper";
+
 
 /**
  * This is the main programmatic entry point for the project.
@@ -25,6 +32,9 @@ export default class InsightFacade implements IInsightFacade {
 	private idAndDatasets: {[key: string]: {kind: InsightDatasetKind; data: any[]}} = {};
 	private querybuilder: QueryBuilder;
 	private sections: Section[] = [];
+	private rooms: Room[] = [];
+	private kind: InsightDatasetKind = InsightDatasetKind.Sections;
+
 	constructor() {
 		console.log("InsightFacadeImpl::init()");
 		this.idAndDatasets = InsightFacadeDatasetHelper.loadFromDisk();
@@ -98,105 +108,121 @@ export default class InsightFacade implements IInsightFacade {
 		return Promise.resolve(list);
 	}
 
+
+
+	public loadFromDisk() {
+		if (!fs.existsSync("./data/datasets.json")) {
+			return {};
+		}
+		let diskJson = JSON.parse(fs.readFileSync("./data/datasets.json").toString());
+		let ret: {[key: string]: {kind: InsightDatasetKind, data: any[]}} = {};
+		Object.keys(diskJson).forEach(function (key) {
+			// each id is a key
+			let sectionList: Section[] = [];
+
+			ret[key] = {kind: InsightDatasetKind.Sections, data: []};
+			ret[key].kind = diskJson[key].kind;
+
+			for (let r of diskJson[key].data) {
+				let s = new Section(r["uuid"], r["id"], r["title"], r["instructor"], r["dept"],
+					r["year"], r["avg"], r["pass"], r["fail"], r["audit"]);
+				sectionList.push(s);
+			}
+			ret[key].data = sectionList;
+		});
+		return ret;
+
+	}
+
+
 	public performQuery(query: unknown): Promise<InsightResult[]> {
-		// initialize querybuilder
+		// gitinitialize querybuilder
 		this.querybuilder = new QueryBuilder();
 		let root = this.querybuilder.parseQuery(query);
+		let queryKind = this.querybuilder.getType();
+		if (queryKind === undefined) {
+			throw new InsightError("failed parsing");
+		} else {
+			this.kind = queryKind;
+		}
 		let temp = this.idAndDatasets[this.querybuilder.getId()];
 		if (temp === undefined) {
 			throw new InsightError("Referenced dataset " + this.querybuilder.getId() + " not added yet");
 		} else {
-			this.sections = this.idAndDatasets[this.querybuilder.getId()].data;
+
+			// check if kind are matched
+			if (this.idAndDatasets[this.querybuilder.getId()].kind !== this.kind) {
+				throw new InsightError("Query kind not matched");
+			}
+			if (this.kind === InsightDatasetKind.Sections) {
+				this.sections = this.idAndDatasets[this.querybuilder.getId()].data;
+			} else {
+				this.rooms = this.idAndDatasets[this.querybuilder.getId()].data;
+				console.log("room check:" + this.rooms.length);
+			}
 		}
+		console.log(root.toString());
+
 		let result = this.answerQuery(root);
 		return Promise.resolve(result);
 	}
 
-	public answerQueryWhere(node: QueryTreeNode) {
-		if (node.hasChildren()) {
-			// haven't reached the leaves
-			let children = node.getChildren();
-			let sectionIndex: number[] = [];
-			if (node.getKey() === "AND") {
-				for (let i = 0; i < node.getChildrenSize(); i++) {
-					// find the same sections among all the children
-					let temp = this.answerQueryWhere(children[i]);
-					if (sectionIndex.length === 0 && i === 0) {
-						sectionIndex.push(...temp);
-					} else {
-						// find the intersection
-						sectionIndex = PerformQueryHelper.findDuplicate(sectionIndex, temp);
-					}
-				}
-			} else if (node.getKey() === "OR") {
-				for (let i = 0; i < node.getChildrenSize(); i++) {
-					// add all sections among all children
-					let temp = this.answerQueryWhere(children[i]);
-					if (sectionIndex.length === 0) {
-						sectionIndex.push(...temp);
-					} else {
-						// find the intersection
-						sectionIndex = PerformQueryHelper.mergeNoDuplicate(sectionIndex, temp);
-					}
-				}
-			} else if (node.getKey() === "NOT") {
-				if (node.getChildrenSize() === 1) {
-					let arr1 = [...Array(this.sections.length).keys()]; // array = 0,1....length-1
-					let temp = this.answerQueryWhere(children[0]);
-					sectionIndex = PerformQueryHelper.excludeArr(arr1, temp);
-				} else {
-					throw new InsightError("127");
-				}
-			}
-			return sectionIndex;
+
+	public getDatasets() {
+		if (this.kind === InsightDatasetKind.Sections) {
+			return this.sections;
+
 		} else {
-			// reach either a mkey or skey
-			let sectionIndex = this.answerQueryWhereBaseCase(node);
-			return sectionIndex;
+			return this.rooms;
 		}
 	}
+
+
+
 
 	public answerQuery(node: QueryTreeNode) {
 		let nodes = node.getChildren();
 		let colIndex: number[] = [];
 		let res: InsightResult[] = [];
+
+		let where: AnswerQueryWhere;
+		let trans: AnswerQueryTrans;
+		let option: AnswerQueryOption;
+		where = new AnswerQueryWhere(this.sections, this.rooms, this.kind);
+		trans = new AnswerQueryTrans(this.kind);
+		option = new AnswerQueryOption(this.sections, this.rooms, this.kind, this.querybuilder.getId());
 		for (const n of nodes) {
 			if (n.getKey() === "WHERE") {
-				colIndex = this.answerQueryWhere(n.getChildren()[0]);
-				if (colIndex.length > 5000) {
-					throw new ResultTooLargeError(
-						"The result is too big. Only queries with a maximum of 5000 " + "results are supported."
-					);
+				if (n.getChildren().length === 0) {
+					colIndex = Array.from(Array(this.getDatasets().length).keys());
+				} else {
+					colIndex = where.handleWhere(n.getChildren()[0]);
 				}
+			} else if (n.getKey() === "TRANSFORMATIONS") {
+				this.transform(trans, colIndex, n);
 			} else if (n.getKey() === "OPTIONS") {
-				if (n.getChildren().length === 2) {
-					let column = n.getChildren()[0].getValue();
-					let order = n.getChildren()[1].getValue();
-
-					if (typeof order === "object") {
-						order = order[0];
-					}
-					if (typeof column === "string" || typeof column === "object") {
-						for (let i of colIndex) {
-							res.push(this.sections[i].toJson(column, this.querybuilder.getId()));
-						}
-						res.sort((a: {[key: string]: any}, b: {[key: string]: any}) =>
-							a[this.querybuilder.getId() + "_" + String(order)] >
-							b[this.querybuilder.getId() + "_" + String(order)]
-								? 1
-								: -1
-						);
-					} else {
-						throw new InsightError("line 199");
-					}
+				if (!trans.hasTransformation()) {
+					res = option.optionNoTrans(n, colIndex, res);
 				} else {
 					let column = n.getChildren()[0].getValue();
-					if (typeof column === "string" || typeof column === "object") {
-						for (let i of colIndex) {
-							res.push(this.sections[i].toJson(column, this.querybuilder.getId()));
+					console.log(column);
+					if (typeof column !== "string" && !Array.isArray(column)) {
+						throw new InsightError("col type error");
+					}
+					let transRes: [{[key: string]: number | string;}] = trans.getTransformedList();
+					let tempRes: InsightResult[] = [];
+					console.log("start " + transRes.length);
+					this.extracted(transRes, column, tempRes);
+					if (n.getChildren().length === 2) {
+						let order = n.getChildren()[1];
+						let dir = order.getChildren()[0].getValue();
+						let keys = order.getChildren()[1].getValue();
+						if (typeof dir !== "string" || typeof keys !== "object" || !Array.isArray(keys)) {
+							throw new InsightError("order type invalid");
 						}
+						res = option.handleOrder(dir, keys, tempRes);
 					} else {
-						throw new InsightError("line 199");
+						return tempRes;
 					}
 				}
 			} else {
@@ -206,74 +232,40 @@ export default class InsightFacade implements IInsightFacade {
 		return res;
 	}
 
-	private answerQueryWhereBaseCase(node: QueryTreeNode) {
-		let sectionIndex: number[] = [];
-		if (node.getKey() === "IS") {
-			let start: boolean = false;
-			let end: boolean = false;
-			let value: string = String(node.getValue());
-			if (value === "*") {
-				sectionIndex = [...Array(this.sections.length).keys()];
-				return sectionIndex;
-			}
-			if (value.startsWith("*")) {
-				value = value.substring(1);
-				start = true;
-			}
-			if (value.endsWith("*")) {
-				value = value.substring(0, value.length - 1);
-				end = true;
-			}
-			for (let i = 0; i < this.sections.length; i++) {
-				sectionIndex = [...this.handleQueryIs(start, end, i, node, value, sectionIndex)];
-			}
+
+	private transform(trans: AnswerQueryTrans, colIndex: number[], n: QueryTreeNode) {
+		console.log("TRANSFORMATIONS");
+		trans.initializeDatasets(this.sections, this.rooms, colIndex);
+		let group = n.getChildren()[0].getValue();
+		let apply = n.getChildren()[1];
+		if (Array.isArray(group) && apply.hasChildren()) {
+			trans.handleTrans(group, apply);
 		} else {
-			let value = node.getKey();
-			for (let i = 0; i < this.sections.length; i++) {
-				if (node.getKey() === "EQ") {
-					if (this.sections[i].getValue(node.getChildrenString()[0]) === node.getValue()) {
-						sectionIndex.push(i); // if a section matches, add its index
-					}
-				} else if (node.getKey() === "GT") {
-					if (this.sections[i].getValue(node.getChildrenString()[0]) > Number(node.getValue())) {
-						sectionIndex.push(i); // if a section matches, add its index
-					}
-				} else if (node.getKey() === "LT") {
-					if (this.sections[i].getValue(node.getChildrenString()[0]) < Number(node.getValue())) {
-						sectionIndex.push(i); // if a section matches, add its index
-					}
-				}
-			}
+			throw new InsightError("188");
 		}
-		return sectionIndex;
+		if (trans.getTransSize() > 5000) {
+			throw new ResultTooLargeError("The result is too big. Only queries with a maximum of 5000 " +
+				"results are supported.");
+
+		}
 	}
 
-	private handleQueryIs(
-		start: boolean,
-		end: boolean,
-		i: number,
-		node: QueryTreeNode,
-		value: string,
-		sectionIndex: number[]
-	) {
-		if (start && end) {
-			if (String(this.sections[i].getValue(node.getChildrenString()[0])).includes(value)) {
-				sectionIndex.push(i);
+
+	private extracted(transRes: [{[p: string]: number | string}], column: string | string[], tempRes: InsightResult[]) {
+		for (let t in transRes) {
+			let temp: {[key: string]: number | string;} = {};
+			let obj = transRes[t];
+			for (let i of column) {
+				if (PerformQueryHelper.isCustomField(i)) {
+					temp[i] = transRes[t][i];
+				} else {
+					temp[this.querybuilder.getId() + "_" + i] = transRes[t][i];
+				}
+
 			}
-		} else if (start) {
-			if (this.sections[i].getValue(node.getChildrenString()[0]).toString().endsWith(value)) {
-				sectionIndex.push(i);
-			}
-		} else if (end) {
-			if (String(this.sections[i].getValue(node.getChildrenString()[0])).startsWith(value)) {
-				sectionIndex.push(i);
-			}
-		} else {
-			if (this.sections[i].getValue(node.getChildrenString()[0]) === value) {
-				// if a section matches, add its index
-				sectionIndex.push(i);
-			}
+			console.log(temp);
+			tempRes.push(temp);
 		}
-		return sectionIndex;
+
 	}
 }

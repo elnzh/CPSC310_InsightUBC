@@ -66,4 +66,58 @@ export class Room {
 			throw new InsightError();
 		}
 	}
+
+
+	public static isMfield(str: string){
+		if(str === "lat" || str === "lon" || str === "seats"){
+			return true;
+		}else{
+			return false;
+		}
+	}
+
+	public static isSfield(str: string){
+		if(str === "fullname" || str === "shortname" || str === "number" || str === "name" || str === "address" ||
+			str === "type" || str === "furniture" || str === "href"){
+			return true;
+		}else{
+			return false;
+		}
+	}
+
+
+	public toJson(keylist: string|string[]|undefined, id: string){
+		if (typeof keylist === "object"){
+			let ret: {[key: string]: string|number;} = {};
+			for(let i of keylist){
+				ret[id + "_"  + i] = this.getValue(i);
+			}
+			return ret;
+
+		}else if(typeof keylist === "string"){
+			let temp = id + "_"  + keylist;
+			return{
+				[temp]:  this.getValue(keylist)
+			};
+		}else{
+			let ret: {[key: string]: string|number;} = {};
+			let pref = id + "_";
+			ret[pref + "fullname"] = this.fullname;
+			ret[pref + "shortname"] = this.shortname;
+			ret[pref + "number"] = this.number;
+			ret[pref + "name"] = this.name;
+			ret[pref + "address"] = this.address;
+			ret[pref + "type"] = this.type;
+			ret[pref + "furniture"] = this.furniture;
+			ret[pref + "href"] = this.href;
+			ret[pref + "lat"] = this.lat;
+			ret[pref + "lon"] = this.lon;
+			ret[pref + "seats"] = this.seats;
+			return ret;
+
+		}
+
+	}
+
+
 }

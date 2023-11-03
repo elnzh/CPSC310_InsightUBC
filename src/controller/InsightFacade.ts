@@ -5,8 +5,7 @@ import {
 	InsightError,
 	InsightResult,
 	NotFoundError,
-	ResultTooLargeError,
-
+	ResultTooLargeError
 } from "./IInsightFacade";
 import DataSetHelper from "./DataSetHelper";
 import * as fs from "fs-extra";
@@ -19,8 +18,6 @@ import AnswerQueryTrans from "./AnswerQueryTrans";
 import InsightFacadeDatasetHelper from "./InsightFacadeDatasetHelper";
 import PerformQueryHelper from "./PerformQueryHelper";
 import AnswerQueryOption from "./AnswerQueryOption";
-import InsightFacadeDatasetHelper from "./InsightFacadeDatasetHelper";
-
 
 /**
  * This is the main programmatic entry point for the project.
@@ -29,7 +26,8 @@ import InsightFacadeDatasetHelper from "./InsightFacadeDatasetHelper";
  */
 
 export default class InsightFacade implements IInsightFacade {
-	private idAndDatasets: {[key: string]: {kind: InsightDatasetKind; data: any[]}} = {};
+
+	private idAndDatasets: {[key: string]: {kind: InsightDatasetKind, data: any[]}} = {};
 	private querybuilder: QueryBuilder;
 	private sections: Section[] = [];
 	private rooms: Room[] = [];
@@ -37,9 +35,10 @@ export default class InsightFacade implements IInsightFacade {
 
 	constructor() {
 		console.log("InsightFacadeImpl::init()");
-		this.idAndDatasets = InsightFacadeDatasetHelper.loadFromDisk();
+		this.idAndDatasets = this.loadFromDisk();
 		this.querybuilder = new QueryBuilder();
 	}
+
 
 	public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
 		return new Promise<string[]>((resolve, reject) => {
@@ -77,6 +76,11 @@ export default class InsightFacade implements IInsightFacade {
 		});
 	}
 
+	private writeToFiles() {
+		fs.ensureDirSync("./data");
+		return fs.writeJson("./data/datasets.json", this.idAndDatasets);
+	}
+
 	public removeDataset(id: string): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 			if (id === null || id.includes("_") || id.trim().length === 0) {
@@ -85,13 +89,11 @@ export default class InsightFacade implements IInsightFacade {
 				reject(new NotFoundError("The input id did not exist!"));
 			} else {
 				delete this.idAndDatasets[id];
-				InsightFacadeDatasetHelper.writeToFiles(this.idAndDatasets)
-					.then(() => {
-						resolve(id);
-					})
-					.catch((err) => {
-						reject(err);
-					});
+				this.writeToFiles().then(() => {
+					resolve(id);
+				}).catch((err) => {
+					reject(err);
+				});
 			}
 		});
 	}
@@ -102,12 +104,11 @@ export default class InsightFacade implements IInsightFacade {
 			list.push({
 				id: key,
 				kind: value.kind,
-				numRows: value.data.length,
+				numRows: value.data.length
 			});
 		}
 		return Promise.resolve(list);
 	}
-
 
 
 	public loadFromDisk() {
@@ -134,7 +135,6 @@ export default class InsightFacade implements IInsightFacade {
 
 	}
 
-
 	public performQuery(query: unknown): Promise<InsightResult[]> {
 		// gitinitialize querybuilder
 		this.querybuilder = new QueryBuilder();
@@ -149,7 +149,6 @@ export default class InsightFacade implements IInsightFacade {
 		if (temp === undefined) {
 			throw new InsightError("Referenced dataset " + this.querybuilder.getId() + " not added yet");
 		} else {
-
 			// check if kind are matched
 			if (this.idAndDatasets[this.querybuilder.getId()].kind !== this.kind) {
 				throw new InsightError("Query kind not matched");
@@ -162,29 +161,24 @@ export default class InsightFacade implements IInsightFacade {
 			}
 		}
 		console.log(root.toString());
-
 		let result = this.answerQuery(root);
+		console.log(result);
 		return Promise.resolve(result);
 	}
-
 
 	public getDatasets() {
 		if (this.kind === InsightDatasetKind.Sections) {
 			return this.sections;
-
 		} else {
 			return this.rooms;
 		}
 	}
 
 
-
-
 	public answerQuery(node: QueryTreeNode) {
 		let nodes = node.getChildren();
 		let colIndex: number[] = [];
 		let res: InsightResult[] = [];
-
 		let where: AnswerQueryWhere;
 		let trans: AnswerQueryTrans;
 		let option: AnswerQueryOption;
@@ -232,7 +226,6 @@ export default class InsightFacade implements IInsightFacade {
 		return res;
 	}
 
-
 	private transform(trans: AnswerQueryTrans, colIndex: number[], n: QueryTreeNode) {
 		console.log("TRANSFORMATIONS");
 		trans.initializeDatasets(this.sections, this.rooms, colIndex);
@@ -246,10 +239,8 @@ export default class InsightFacade implements IInsightFacade {
 		if (trans.getTransSize() > 5000) {
 			throw new ResultTooLargeError("The result is too big. Only queries with a maximum of 5000 " +
 				"results are supported.");
-
 		}
 	}
-
 
 	private extracted(transRes: [{[p: string]: number | string}], column: string | string[], tempRes: InsightResult[]) {
 		for (let t in transRes) {
@@ -267,6 +258,6 @@ export default class InsightFacade implements IInsightFacade {
 			console.log(temp);
 			tempRes.push(temp);
 		}
-
 	}
 }
+

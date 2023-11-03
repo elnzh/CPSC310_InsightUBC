@@ -157,12 +157,12 @@ export default class InsightFacade implements IInsightFacade {
 				this.sections = this.idAndDatasets[this.querybuilder.getId()].data;
 			} else {
 				this.rooms = this.idAndDatasets[this.querybuilder.getId()].data;
-				console.log("room check:" + this.rooms.length);
+				// console.log("room check:" + this.rooms.length);
 			}
 		}
-		console.log(root.toString());
+		// console.log(root.toString());
 		let result = this.answerQuery(root);
-		console.log(result);
+		// console.log(result);
 		return Promise.resolve(result);
 	}
 
@@ -199,13 +199,13 @@ export default class InsightFacade implements IInsightFacade {
 					res = option.optionNoTrans(n, colIndex, res);
 				} else {
 					let column = n.getChildren()[0].getValue();
-					console.log(column);
+					// console.log(column);
 					if (typeof column !== "string" && !Array.isArray(column)) {
 						throw new InsightError("col type error");
 					}
 					let transRes: [{[key: string]: number | string;}] = trans.getTransformedList();
 					let tempRes: InsightResult[] = [];
-					console.log("start " + transRes.length);
+					// console.log("start " + transRes.length);
 					this.extracted(transRes, column, tempRes);
 					if (n.getChildren().length === 2) {
 						let order = n.getChildren()[1];
@@ -227,7 +227,7 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private transform(trans: AnswerQueryTrans, colIndex: number[], n: QueryTreeNode) {
-		console.log("TRANSFORMATIONS");
+		// console.log("TRANSFORMATIONS");
 		trans.initializeDatasets(this.sections, this.rooms, colIndex);
 		let group = n.getChildren()[0].getValue();
 		let apply = n.getChildren()[1];
@@ -255,7 +255,7 @@ export default class InsightFacade implements IInsightFacade {
 
 			}
 
-			console.log(temp);
+			// console.log(temp);
 			tempRes.push(temp);
 		}
 	}

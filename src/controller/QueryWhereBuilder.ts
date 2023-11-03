@@ -20,13 +20,13 @@ export default class QueryWhereBuilder{
 
 	public checkWhereTypeKey(parsedWhere: any){
 		if(typeof parsedWhere !== "object" || parsedWhere instanceof Array){
-			console.log("WHERE must be object");
+			// console.log("WHERE must be object");
 			throw new InsightError();
 		}
 
 		// WHERE should only have 1 key
 		if(Object.keys(parsedWhere).length > 1){
-			console.log("WHERE should only have 1 key ");
+			// console.log("WHERE should only have 1 key ");
 			throw new InsightError();
 		}
 	}

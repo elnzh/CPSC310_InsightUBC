@@ -263,6 +263,7 @@ export default class InsightFacade implements IInsightFacade {
 				}
 
 			}
+
 			console.log(temp);
 			tempRes.push(temp);
 		}

@@ -647,8 +647,6 @@ describe("InsightFacade", function () {
 				{sections_id:"599"}]);
 		});
 
-
-
 		after(function () {
 			console.info(`After: ${this.test?.parent?.title}`);
 			clearDisk();

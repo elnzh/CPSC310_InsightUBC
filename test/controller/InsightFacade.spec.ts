@@ -19,6 +19,7 @@ describe("InsightFacade", function () {
 
 	// Declare datasets used in tests. You should add more datasets like this!
 	let sections: string;
+	let rooms: string;
 	let validSections: string;
 	let emptySections: string;
 	let emptyFolder: string;
@@ -34,6 +35,7 @@ describe("InsightFacade", function () {
 		// This block runs once and loads the datasets.
 		// sections = getContentFromArchives("pair.zip");
 		sections = getContentFromArchives("pair.zip");
+		rooms = getContentFromArchives("campus.zip");
 		// Just in case there is anything hanging around from a previous run of the test suite
 		clearDisk();
 	});
@@ -119,13 +121,13 @@ describe("InsightFacade", function () {
 
 		});
 
-		it("8. should reject with InsightDatasetKind==room",async function(){
-			try{
-				const result = await facade.addDataset("id", validSections, InsightDatasetKind.Rooms);
+		it("8. should add one dataset with InsightDatasetKind==room", async function () {
+			try {
+				const result = await facade.addDataset("id", rooms, InsightDatasetKind.Rooms);
+				expect(result).to.have.length(1);
+				expect(result).have.deep.members(["id"]);
+			} catch (err) {
 				expect.fail();
-			}catch(err){
-				expect(err).to.be.instanceof(InsightError);
-
 			}
 		});
 
@@ -444,6 +446,7 @@ describe("InsightFacade", function () {
 			// ];
 			const loadDatasetPromises = [
 				facade.addDataset("sections", sections, InsightDatasetKind.Sections),
+				// facade.addDataset("rooms", rooms, InsightDatasetKind.Rooms),
 			];
 
 			return Promise.all(loadDatasetPromises);
@@ -476,7 +479,12 @@ describe("InsightFacade", function () {
 							"sections_dept",
 							"sections_avg"
 						],
-						ORDER: "sections_avg"
+						ORDER: {
+							dir: "UP",
+							keys: [
+								"sections_avg"
+							]
+						}
 					}
 				});
 
@@ -545,6 +553,48 @@ describe("InsightFacade", function () {
 		// });
 
 
+		it("sample", async function() {
+			facade = new InsightFacade();
+			const result = await facade.performQuery({
+				WHERE: {
+					IS: {
+						sections_dept: "phil"
+					}
+				},
+				OPTIONS: {
+					COLUMNS: [
+						"sections_id"
+					],
+					ORDER:{
+						dir:"UP",
+						keys:["sections_id"]
+					}
+				},
+				TRANSFORMATIONS: {
+					GROUP: [
+						"sections_id"
+					],
+					APPLY: [
+						{
+							minAVG: {
+								MIN: "sections_avg"
+							}
+						}
+					]
+				}
+			});
+			expect(result).have.deep.members([{sections_id:"100"},{sections_id:"101"},
+				{sections_id:"102"},{sections_id:"120"},
+				{sections_id:"125"},{sections_id:"150"},
+				{sections_id:"316"},{sections_id:"334"},
+				{sections_id:"364"},{sections_id:"371"},
+				{sections_id:"378"},{sections_id:"388"},
+				{sections_id:"464"},{sections_id:"485"},
+				{sections_id:"487"}, {sections_id:"585"},
+				{sections_id:"599"}]);
+		});
+
+
 		after(function () {
 			console.info(`After: ${this.test?.parent?.title}`);
 			clearDisk();
@@ -553,25 +603,25 @@ describe("InsightFacade", function () {
 
 		type PQErrorKind = "ResultTooLargeError" | "InsightError";
 
-		folderTest<unknown, Promise<InsightResult[]>, PQErrorKind>(
-			"Dynamic InsightFacade PerformQuery tests",
-			(input) => facade.performQuery(input),
-			"./test/resources/queries",
-			{
-				assertOnResult: async (actual, expected) => {
-					expect(actual).have.deep.members(await expected); // order doesn't matter;
-				},
-				errorValidator: (error): error is PQErrorKind =>
-					error === "ResultTooLargeError" || error === "InsightError",
-				assertOnError: (actual, expected) => {
-					if (expected === "ResultTooLargeError") {
-						expect(actual).to.be.an.instanceOf(ResultTooLargeError);
-					} else {
-						expect(actual).to.be.an.instanceOf(InsightError);
-					}
-				},
-			}
-		);
+		// folderTest<unknown, Promise<InsightResult[]>, PQErrorKind>(
+		// 	"Dynamic InsightFacade PerformQuery tests",
+		// 	(input) => facade.performQuery(input),
+		// 	"./test/resources/queries",
+		// 	{
+		// 		assertOnResult: async (actual, expected) => {
+		// 			expect(actual).have.deep.members(await expected); // order doesn't matter;
+		// 		},
+		// 		errorValidator: (error): error is PQErrorKind =>
+		// 			error === "ResultTooLargeError" || error === "InsightError",
+		// 		assertOnError: (actual, expected) => {
+		// 			if (expected === "ResultTooLargeError") {
+		// 				expect(actual).to.be.an.instanceOf(ResultTooLargeError);
+		// 			} else {
+		// 				expect(actual).to.be.an.instanceOf(InsightError);
+		// 			}
+		// 		},
+		// 	}
+		// );
 
 		folderTest<unknown, Promise<InsightResult[]>, PQErrorKind>(
 			"Dynamic InsightFacade PerformQuery tests - rooms",

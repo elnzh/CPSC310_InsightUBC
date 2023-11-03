@@ -4,14 +4,21 @@ import {
 	InsightDatasetKind,
 	InsightError,
 	InsightResult,
-	NotFoundError, ResultTooLargeError
+	NotFoundError,
+	ResultTooLargeError
 } from "./IInsightFacade";
 import DataSetHelper from "./DataSetHelper";
 import * as fs from "fs-extra";
 import {QueryTreeNode} from "./QueryTreeNode";
+import {Room} from "./Room";
 import {Section} from "./Section";
 import QueryBuilder from "./QueryBuilder";
+import AnswerQueryWhere from "./AnswerQueryWhere";
+import AnswerQueryTrans from "./AnswerQueryTrans";
+import InsightFacadeDatasetHelper from "./InsightFacadeDatasetHelper";
 import PerformQueryHelper from "./PerformQueryHelper";
+import AnswerQueryOption from "./AnswerQueryOption";
+
 /**
  * This is the main programmatic entry point for the project.
  * Method documentation is in IInsightFacade
@@ -23,31 +30,49 @@ export default class InsightFacade implements IInsightFacade {
 	private idAndDatasets: {[key: string]: {kind: InsightDatasetKind, data: any[]}} = {};
 	private querybuilder: QueryBuilder;
 	private sections: Section[] = [];
+	private rooms: Room[] = [];
+	private kind: InsightDatasetKind = InsightDatasetKind.Sections;
+
 	constructor() {
 		console.log("InsightFacadeImpl::init()");
 		this.idAndDatasets = this.loadFromDisk();
 		this.querybuilder = new QueryBuilder();
 	}
 
+
 	public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
 		return new Promise<string[]>((resolve, reject) => {
 			if (id === null || id.includes("_") || id.trim().length === 0) {
 				reject(new InsightError("The input id is invalid!"));
-			}else if (Object.keys(this.idAndDatasets).includes(id)) {
+			} else if (Object.keys(this.idAndDatasets).includes(id)) {
 				reject(new InsightError("The input id has existed!"));
-			}else if (!(kind === InsightDatasetKind.Sections)) {
-				reject(new InsightError("The input kind is not valid!"));
-			}else{
-				DataSetHelper.addSectionDataset(content).then((r: any) => {
-					this.idAndDatasets[id] = {kind: kind, data: r};
-					return this.writeToFiles();
-				}).then(() => {
-					resolve(Object.keys(this.idAndDatasets));
-				}).catch((error) => {
-					reject(new InsightError("Invalid files."));
-				});
+			} else if (kind === InsightDatasetKind.Sections) {
+				DataSetHelper.addSectionDataset(content)
+					.then((r: any) => {
+						this.idAndDatasets[id] = {kind: kind, data: r};
+						return InsightFacadeDatasetHelper.writeToFiles(this.idAndDatasets);
+					})
+					.then(() => {
+						resolve(Object.keys(this.idAndDatasets));
+					})
+					.catch((error) => {
+						reject(new InsightError("Invalid files."));
+					});
+			} else if (kind === InsightDatasetKind.Rooms) {
+				DataSetHelper.addRoomDataset(content)
+					.then((r: any) => {
+						this.idAndDatasets[id] = {kind: kind, data: r};
+						return InsightFacadeDatasetHelper.writeToFiles(this.idAndDatasets);
+					})
+					.then(() => {
+						resolve(Object.keys(this.idAndDatasets));
+					})
+					.catch((error) => {
+						reject(new InsightError("Invalid files."));
+					});
+			} else {
+				reject(new InsightError("The kind is invalid!"));
 			}
-
 		});
 	}
 
@@ -60,9 +85,9 @@ export default class InsightFacade implements IInsightFacade {
 		return new Promise<string>((resolve, reject) => {
 			if (id === null || id.includes("_") || id.trim().length === 0) {
 				reject(new InsightError("The input id is invalid!"));
-			}else if (!Object.keys(this.idAndDatasets).includes(id)) {
+			} else if (!Object.keys(this.idAndDatasets).includes(id)) {
 				reject(new NotFoundError("The input id did not exist!"));
-			}else{
+			} else {
 				delete this.idAndDatasets[id];
 				this.writeToFiles().then(() => {
 					resolve(id);
@@ -86,20 +111,20 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 
-	public loadFromDisk(){
-		if(!fs.existsSync("./data/datasets.json")){
+	public loadFromDisk() {
+		if (!fs.existsSync("./data/datasets.json")) {
 			return {};
 		}
 		let diskJson = JSON.parse(fs.readFileSync("./data/datasets.json").toString());
 		let ret: {[key: string]: {kind: InsightDatasetKind, data: any[]}} = {};
-		Object.keys(diskJson).forEach(function(key) {
+		Object.keys(diskJson).forEach(function (key) {
 			// each id is a key
 			let sectionList: Section[] = [];
 
-			ret[key] = {kind:InsightDatasetKind.Sections, data:[]};
+			ret[key] = {kind: InsightDatasetKind.Sections, data: []};
 			ret[key].kind = diskJson[key].kind;
 
-			for (let r of diskJson[key].data){
+			for (let r of diskJson[key].data) {
 				let s = new Section(r["uuid"], r["id"], r["title"], r["instructor"], r["dept"],
 					r["year"], r["avg"], r["pass"], r["fail"], r["audit"]);
 				sectionList.push(s);
@@ -114,186 +139,124 @@ export default class InsightFacade implements IInsightFacade {
 		// gitinitialize querybuilder
 		this.querybuilder = new QueryBuilder();
 		let root = this.querybuilder.parseQuery(query);
-		let temp = this.idAndDatasets[this.querybuilder.getId()];
-		if(temp === undefined){
-			throw new InsightError("Referenced dataset " + this.querybuilder.getId() + " not added yet");
-		}else{
-			this.sections = this.idAndDatasets[this.querybuilder.getId()].data;
-			console.log("this setions" + this.sections.length);
+		let queryKind = this.querybuilder.getType();
+		if (queryKind === undefined) {
+			throw new InsightError("failed parsing");
+		} else {
+			this.kind = queryKind;
 		}
-
+		let temp = this.idAndDatasets[this.querybuilder.getId()];
+		if (temp === undefined) {
+			throw new InsightError("Referenced dataset " + this.querybuilder.getId() + " not added yet");
+		} else {
+			// check if kind are matched
+			if (this.idAndDatasets[this.querybuilder.getId()].kind !== this.kind) {
+				throw new InsightError("Query kind not matched");
+			}
+			if (this.kind === InsightDatasetKind.Sections) {
+				this.sections = this.idAndDatasets[this.querybuilder.getId()].data;
+			} else {
+				this.rooms = this.idAndDatasets[this.querybuilder.getId()].data;
+				console.log("room check:" + this.rooms.length);
+			}
+		}
+		console.log(root.toString());
 		let result = this.answerQuery(root);
 		console.log(result);
 		return Promise.resolve(result);
-
 	}
 
-	public answerQueryWhere(node: QueryTreeNode){
-		if(node.hasChildren()){
-			// haven't reached the leaves
-			let children = node.getChildren();
-			let sectionIndex: number[] = [];
-			if(node.getKey() === "AND"){
-				for(let i = 0; i < node.getChildrenSize(); i++) {
-					// find the same sections among all the children
-					let temp = this.answerQueryWhere(children[i]);
-					if(sectionIndex.length === 0 && i === 0){
-						sectionIndex.push(...temp);
-					}else{
-						// find the intersection
-						sectionIndex = PerformQueryHelper.findDuplicate(sectionIndex,temp);
-					}
-				}
-			}else if(node.getKey() === "OR"){
-				for(let i = 0; i < node.getChildrenSize(); i++) {
-					// add all sections among all children
-					let temp = this.answerQueryWhere(children[i]);
-					if(sectionIndex.length === 0){
-						sectionIndex.push(...temp);
-					}else{
-						// find the intersection
-						sectionIndex = PerformQueryHelper.mergeNoDuplicate(sectionIndex,temp);
-					}
-				}
-			}else if(node.getKey() === "NOT"){
-				console.log(node.getKey());
-				if( node.getChildrenSize() === 1){
-					let arr1 = [...Array(this.sections.length).keys()];  // array = 0,1....length-1
-					let temp = this.answerQueryWhere(children[0]);
-					sectionIndex = PerformQueryHelper.excludeArr(arr1,temp);
-
-				}else{
-					throw new InsightError("127");
-				}
-			}
-			return sectionIndex;
+	public getDatasets() {
+		if (this.kind === InsightDatasetKind.Sections) {
+			return this.sections;
 		} else {
-			// reach either a mkey or skey
-			let sectionIndex = this.answerQueryWhereBaseCase(node);
-			return sectionIndex;
+			return this.rooms;
 		}
 	}
 
 
-	public answerQuery(node: QueryTreeNode){
-		let nodes =  node.getChildren();
+	public answerQuery(node: QueryTreeNode) {
+		let nodes = node.getChildren();
 		let colIndex: number[] = [];
 		let res: InsightResult[] = [];
-		for(const n of nodes){
-			if(n.getKey() === "WHERE"){
-				colIndex = this.answerQueryWhere(n.getChildren()[0]);
-				if(colIndex.length > 5000){
-					throw new ResultTooLargeError("The result is too big. Only queries with a maximum of 5000 " +
-                        "results are supported.");
+		let where: AnswerQueryWhere;
+		let trans: AnswerQueryTrans;
+		let option: AnswerQueryOption;
+		where = new AnswerQueryWhere(this.sections, this.rooms, this.kind);
+		trans = new AnswerQueryTrans(this.kind);
+		option = new AnswerQueryOption(this.sections, this.rooms, this.kind, this.querybuilder.getId());
+		for (const n of nodes) {
+			if (n.getKey() === "WHERE") {
+				if (n.getChildren().length === 0) {
+					colIndex = Array.from(Array(this.getDatasets().length).keys());
+				} else {
+					colIndex = where.handleWhere(n.getChildren()[0]);
 				}
-			}else if(n.getKey() === "OPTIONS"){
-				if( n.getChildren().length === 2) {
+			} else if (n.getKey() === "TRANSFORMATIONS") {
+				this.transform(trans, colIndex, n);
+			} else if (n.getKey() === "OPTIONS") {
+				if (!trans.hasTransformation()) {
+					res = option.optionNoTrans(n, colIndex, res);
+				} else {
 					let column = n.getChildren()[0].getValue();
-					let order = n.getChildren()[1].getValue();
-
-					if (typeof order === "object") {
-						order = order[0];
+					console.log(column);
+					if (typeof column !== "string" && !Array.isArray(column)) {
+						throw new InsightError("col type error");
 					}
-					if (typeof column === "string" || typeof column === "object") {
-						for (let i of colIndex) {
-							res.push(this.sections[i].toJson(column, this.querybuilder.getId()));
+					let transRes: [{[key: string]: number | string;}] = trans.getTransformedList();
+					let tempRes: InsightResult[] = [];
+					console.log("start " + transRes.length);
+					this.extracted(transRes, column, tempRes);
+					if (n.getChildren().length === 2) {
+						let order = n.getChildren()[1];
+						let dir = order.getChildren()[0].getValue();
+						let keys = order.getChildren()[1].getValue();
+						if (typeof dir !== "string" || typeof keys !== "object" || !Array.isArray(keys)) {
+							throw new InsightError("order type invalid");
 						}
-						res.sort((a: {[key: string]: any}, b: {[key: string]: any}) => a[
-							this.querybuilder.getId() + "_" + String(order)] > b[this.querybuilder.getId() + "_" +
-						String(order)] ? 1 : -1);
+						res = option.handleOrder(dir, keys, tempRes);
 					} else {
-						throw new InsightError("line 199");
-					}
-				}else{
-					let column = n.getChildren()[0].getValue();
-					if (typeof column === "string" || typeof column === "object") {
-						for (let i of colIndex) {
-							res.push(this.sections[i].toJson(column, this.querybuilder.getId()));
-						}
-					} else {
-						throw new InsightError("line 199");
+						return tempRes;
 					}
 				}
-
-			}else{
+			} else {
 				throw new InsightError("unknown key");
 			}
 		}
 		return res;
 	}
 
-	private answerQueryWhereBaseCase(node: QueryTreeNode) {
-		let sectionIndex: number[] = [];
-		if (node.getKey() === "IS") {
-			console.log("IS");
-			let start: boolean = false;
-			let end: boolean = false;
-			let value: string = String(node.getValue());
-			if(value === "*"){
-				console.log("*");
-				sectionIndex = [...Array(this.sections.length).keys()];
-				return sectionIndex;
-			}
-			if(value.startsWith("*")){
-				console.log("*t");
-				value = value.substring(1);
-				start = true;
-			}
-			if(value.endsWith("*")){
-				console.log("t*");
-				value = value.substring(0, value.length - 1);
-				console.log(value);
-				end = true;
-			}
-
-			for (let i = 0; i < this.sections.length; i++) {
-				sectionIndex = [...this.handleQueryIs(start, end, i, node, value, sectionIndex)];
-			}
+	private transform(trans: AnswerQueryTrans, colIndex: number[], n: QueryTreeNode) {
+		console.log("TRANSFORMATIONS");
+		trans.initializeDatasets(this.sections, this.rooms, colIndex);
+		let group = n.getChildren()[0].getValue();
+		let apply = n.getChildren()[1];
+		if (Array.isArray(group) && apply.hasChildren()) {
+			trans.handleTrans(group, apply);
 		} else {
-			let value = node.getKey();
-			for (let i = 0; i < this.sections.length; i++) {
-				if (node.getKey() === "EQ") {
-					if (this.sections[i].getValue(node.getChildrenString()[0]) === node.getValue()) {
-						sectionIndex.push(i); // if a section matches, add its index
-					}
-				}else if (node.getKey() === "GT") {
-					if (this.sections[i].getValue(node.getChildrenString()[0]) > Number(node.getValue())) {
-						sectionIndex.push(i); // if a section matches, add its index
-					}
-				}else if (node.getKey() === "LT") {
-					if (this.sections[i].getValue(node.getChildrenString()[0]) < Number(node.getValue())) {
-						sectionIndex.push(i); // if a section matches, add its index
-					}
+			throw new InsightError("188");
+		}
+		if (trans.getTransSize() > 5000) {
+			throw new ResultTooLargeError("The result is too big. Only queries with a maximum of 5000 " +
+				"results are supported.");
+		}
+	}
+
+	private extracted(transRes: [{[p: string]: number | string}], column: string | string[], tempRes: InsightResult[]) {
+		for (let t in transRes) {
+			let temp: {[key: string]: number | string;} = {};
+			let obj = transRes[t];
+			for (let i of column) {
+				if (PerformQueryHelper.isCustomField(i)) {
+					temp[i] = transRes[t][i];
+				} else {
+					temp[this.querybuilder.getId() + "_" + i] = transRes[t][i];
 				}
+
 			}
+			console.log(temp);
+			tempRes.push(temp);
 		}
-		return sectionIndex;
 	}
-
-	private handleQueryIs(start: boolean, end: boolean, i: number, node: QueryTreeNode,
-		value: string, sectionIndex: number[]) {
-		if (start && end) {
-			if (String(this.sections[i].getValue(node.getChildrenString()[0])).includes(value)) {
-				sectionIndex.push(i);
-			}
-		} else if (start) {
-			if (this.sections[i].getValue(node.getChildrenString()[0]).toString().endsWith(value)) {
-				sectionIndex.push(i);
-			}
-		} else if (end) {
-			if (String(this.sections[i].getValue(node.getChildrenString()[0])).startsWith(value)) {
-				sectionIndex.push(i);
-			}
-		} else {
-			if (this.sections[i].getValue(node.getChildrenString()[0]) === value) {
-				// if a section matches, add its index
-				sectionIndex.push(i);
-			}
-		}
-
-		return sectionIndex;
-	}
-
-
 }
 

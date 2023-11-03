@@ -12,6 +12,7 @@ export class Section {
 	private fail: number;
 	private audit: number;
 
+
 	constructor(uuid: string, id: string, title: string,instructor: string, dept: string, year: number,
 		avg: number, pass: number, fail: number, audit: number){
 		this.uuid = uuid;
@@ -52,7 +53,6 @@ export class Section {
 		}
 	}
 
-
 	public toJson(keylist: string|string[]|undefined, id: string){
 		if (typeof keylist === "object"){
 			let ret: {[key: string]: string|number;} = {};
@@ -64,7 +64,7 @@ export class Section {
 		}else if(typeof keylist === "string"){
 			let temp = id + "_"  + keylist;
 			return{
-				temp:  this.getValue(keylist)
+				[temp]:  this.getValue(keylist)
 			};
 		}else{
 			let ret: {[key: string]: string|number;} = {};
@@ -89,6 +89,23 @@ export class Section {
 		return "uuid:" + this.uuid + "\nid: " + this.id + "\ntitle:" + this.title + "\ninstructor: " + this.instructor +
 			"\ndept:" + this.dept + "\nyear: " + this.year + "\navg:" + this.avg + "\npass: " + this.pass +
 			"\nfail:" + this.fail + "\naudit:" + this.audit;
+	}
+
+
+	public static isMfield(str: string){
+		if(str === "avg" || str === "pass" || str === "fail" || str === "audit" || str === "year"){
+			return true;
+		}else{
+			return false;
+		}
+	}
+
+	public static isSfield(str: string){
+		if(str === "dept" || str === "id" || str === "instructor" || str === "title" || str === "uuid"){
+			return true;
+		}else{
+			return false;
+		}
 	}
 
 

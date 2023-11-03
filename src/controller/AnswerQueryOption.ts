@@ -19,11 +19,17 @@ export default class AnswerQueryOption{
 		}
 	}
 
-	public getDatasets() {
+	public getDatasets(i: number): Section | Room {
 		if (this.type === InsightDatasetKind.Sections) {
-			return this.sections;
-		} else {
-			return this.rooms;
+			if(this.sections.length <= i){
+				throw new InsightError();
+			}
+			return this.sections[i];
+		}else{
+			if(this.rooms.length <= i){
+				throw new InsightError();
+			}
+			return this.rooms[i];
 		}
 	}
 
@@ -38,7 +44,7 @@ export default class AnswerQueryOption{
 
 			if (typeof column === "string" || typeof column === "object") {
 				for (let i of colIndex) {
-					res.push(this.getDatasets()[i].toJson(column, this.id));
+					res.push(this.getDatasets(i).toJson(column, this.id));
 				}
 				if (!order.hasChildren()) {
 					let key = order.getValue();
@@ -63,7 +69,7 @@ export default class AnswerQueryOption{
 			let column = n.getChildren()[0].getValue();
 			if (typeof column === "string" || typeof column === "object") {
 				for (let i of colIndex) {
-					res.push(this.getDatasets()[i].toJson(column,  this.id));
+					res.push(this.getDatasets(i).toJson(column,  this.id));
 				}
 			} else {
 				throw new InsightError("line 199");

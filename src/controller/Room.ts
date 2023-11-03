@@ -2,41 +2,35 @@ import {InsightError} from "./IInsightFacade";
 
 export class Room {
 	private fullname: string;
-	private shortname: string;
+	private shortname: string = "";
 	private number: string;
-	private name: string;
-	private address: string;
+	private name: string = "";
+	private address: string = "";
 	private type: string;
 	private furniture: string;
-	private href: string;
-	private lat: number;
-	private lon: number;
+	private href: string = "";
+	private lat: number = 0;
+	private lon: number = 0;
 	private seats: number;
 
-	constructor(
-		fullname: string,
-		shortname: string,
-		number: string,
-		name: string,
-		address: string,
-		type: string,
-		furniture: string,
-		href: string,
-		lat: number,
-		lon: number,
-		seats: number
-	) {
+	constructor(fullname: string, number: string, seats: number, furniture: string, type: string) {
 		this.fullname = fullname;
-		this.shortname = shortname;
 		this.number = number;
-		this.name = name;
-		this.address = address;
 		this.type = type;
 		this.furniture = furniture;
+		this.seats = seats;
+	}
+
+	public setBuildingValue( shortname: string, name: string, address: string, href: string,
+		lat: number, lon: number){
+
+		this.shortname = shortname;
+		this.name = name;
+		this.address = address;
 		this.href = href;
 		this.lat = lat;
 		this.lon = lon;
-		this.seats = seats;
+
 	}
 
 	public getValue(key: string) {

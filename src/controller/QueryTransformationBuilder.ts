@@ -57,15 +57,8 @@ export default class QueryTransformationBuilder{
 		}
 		let groupNode = new QueryTreeNode("GROUP", this.groupKey);
 		this.trans.addChildren(groupNode);
-
-		if(!Array.isArray(apply)){
-			throw new InsightError("APPLY must be an array");
-		}
-		if(Array(apply).length < 1){
-			throw new InsightError("APPLY must be a non-empty array");
-		}
+		this.checkApply(apply);
 		let applyNode = new QueryTreeNode("APPLY", undefined);
-
 		for(let key of apply){
 			if(typeof key !== "object"){
 				throw new InsightError("APPLY must be array of objects");
@@ -76,6 +69,9 @@ export default class QueryTransformationBuilder{
 					throw new InsightError("Apply body should only have 1 key");
 				}
 				let applyKeyName = Object.keys(key)[0];
+				if(this.applykey.includes(applyKeyName)){
+					throw new InsightError("duplicate apply key");
+				}
 				this.checkApplyKeyNameNoUnderScore(applyKeyName);
 				let applyKeyVal = Object.values(key)[0];
 				if(typeof applyKeyVal !== "object" && applyKeyVal !== null){
@@ -83,8 +79,7 @@ export default class QueryTransformationBuilder{
 				}
 				let token = Object.keys(Object(applyKeyVal))[0];
 				let tokenValue = Object.values(Object(applyKeyVal))[0];
-				// console.log(token); // COUNT
-				// console.log(tokenValue); // rooms_seats
+
 				if(typeof tokenValue !== "string"){
 					throw new InsightError("Invalid apply token value");
 				}
@@ -100,6 +95,15 @@ export default class QueryTransformationBuilder{
 		}
 		this.trans.addChildren(applyNode);
 
+	}
+
+	private checkApply(apply: any[]) {
+		if (!Array.isArray(apply)) {
+			throw new InsightError("APPLY must be an array");
+		}
+		if (Array(apply).length < 1) {
+			throw new InsightError("APPLY must be a non-empty array");
+		}
 	}
 
 	public checkKeyValid(str: string){

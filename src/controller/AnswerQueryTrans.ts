@@ -49,12 +49,6 @@ export default class AnswerQueryTrans {
 		}else{
 			this.handleTransRoom(group, apply);
 		}
-		// console.log("check trans:" + this.transformation.length);
-		// for(let i in this.transformation){
-		// 	for (const key in this.transformation[i]) {
-		// 		console.log(`${key}:::: ${this.transformation[i][key]}`);
-		// 	}
-		// }
 		return this.transformation;
 	}
 
@@ -78,35 +72,39 @@ export default class AnswerQueryTrans {
 			}
 		}
 		let applyChildren = apply.getChildren();
-		for(let a in applyChildren){
-			applycol.push(applyChildren[a].getKey()); // minAVG
-			let token = applyChildren[a].getChildrenString();// MIN,MAX,AVG...
-			let field = applyChildren[a].getValue(); // avg
-			for(let key of map.keys()){
-				let val: number;
-				let temp = map.get(key);
-				if(temp === undefined) {
-					throw new InsightError("undefiend map value");
-				}
-				if(token[0] === "MAX"){
-					val = this.calculateMAX(temp,String(field));
-				}else if(token[0] === "MIN"){
-					val = this.calculateMIN(temp,String(field));
-				}else if(token[0] === "AVG"){
-					val = this.calculateAVG(temp,String(field));
-				}else if(token[0] === "SUM"){
-					val = this.calculateSUM(temp,String(field));
-				}else{
-					val = this.findCOUNT(temp,String(field));
-				}
-				// initialize the obj
-				let obj: {[key: string]: number|string;} = {};
+		for(let key of map.keys()){
+			let val: number;
+			let temp = map.get(key);
+			if(temp === undefined) {
+				throw new InsightError("undefiend map value");
+			}
+			// initialize the obj
+			let obj: {[key: string]: number|string;} = {};
+			for(let a in applyChildren){
+				applycol.push(applyChildren[a].getKey()); // minAVG
+				let token = applyChildren[a].getChildrenString();// MIN,MAX,AVG...
+				let field = applyChildren[a].getValue(); // avg
+				val = this.getCalculateToken(token, temp, field);
 				for(let g in group){
 					obj[group[g]] = temp[0].getValue(group[g]);
 				}
 				obj[applycol[a]] = val;
-				this.transformation.push(obj);
 			}
+			this.transformation.push(obj);
+		}
+	}
+
+	private getCalculateToken(token: string[], temp: Section[], field: number | string | string[] | undefined) {
+		if (token[0] === "MAX") {
+			return this.calculateMAX(temp, String(field));
+		} else if (token[0] === "MIN") {
+			return this.calculateMIN(temp, String(field));
+		} else if (token[0] === "AVG") {
+			return this.calculateAVG(temp, String(field));
+		} else if (token[0] === "SUM") {
+			return this.calculateSUM(temp, String(field));
+		} else {
+			return this.findCOUNT(temp, String(field));
 		}
 	}
 
@@ -129,43 +127,49 @@ export default class AnswerQueryTrans {
 			}
 		}
 		let applyChildren = apply.getChildren();
-		for(let a in applyChildren){
-			applycol.push(applyChildren[a].getKey()); // minAVG
-			let token = applyChildren[a].getChildrenString();// MIN,MAX,AVG...
-			let field = applyChildren[a].getValue(); // avg
-			for(let key of map.keys()){
-				let val: number;
-				let temp = map.get(key);
-				if(temp === undefined) {
-					throw new InsightError("undefined map value");
-				}
-				if(token[0] === "MAX"){
-					val = this.calculateMAX(temp,String(field));
-				}else if(token[0] === "MIN"){
-					val = this.calculateMIN(temp,String(field));
-				}else if(token[0] === "AVG"){
-					val = this.calculateAVG(temp,String(field));
-				}else if(token[0] === "SUM"){
-					val = this.calculateSUM(temp,String(field));
-				}else{
-					val = this.findCOUNT(temp,String(field));
-				}
-                // initialize the obj
-				let obj: {[key: string]: number|string;} = {};
+		for(let key of map.keys()){
+			let val: number;
+			let temp = map.get(key);
+			if(temp === undefined) {
+				throw new InsightError("undefined map value");
+			}
+			let obj: {[key: string]: number|string;} = {};
+			for(let a in applyChildren) {
+				applycol.push(applyChildren[a].getKey()); // minAVG
+				let token = applyChildren[a].getChildrenString();// MIN,MAX,AVG...
+				let field = applyChildren[a].getValue(); // avg
+				val = this.getCalculateTokenValRoom(token, temp, field);
+					// initialize the obj
+
 				for(let g in group){
 					obj[group[g]] = temp[0].getValue(group[g]);
 				}
 				obj[applycol[a]] = val;
-				// console.log(obj);
-				this.transformation.push(obj);
 			}
+			this.transformation.push(obj);
+
 		}
+
 	}
 
 
+	private getCalculateTokenValRoom(token: string[], temp: Room[], field: number | string | string[] | undefined) {
+		if (token[0] === "MAX") {
+			return this.calculateMAX(temp, String(field));
+		} else if (token[0] === "MIN") {
+			return this.calculateMIN(temp, String(field));
+		} else if (token[0] === "AVG") {
+			return this.calculateAVG(temp, String(field));
+		} else if (token[0] === "SUM") {
+			return this.calculateSUM(temp, String(field));
+		} else {
+			return this.findCOUNT(temp, String(field));
+		}
+	}
+
 	public calculateAVG(datasets: Section[]|Room[], key: string){
-		let size = datasets.length;
-		let total = 0.0;
+		let size: number = datasets.length;
+		let total: number = 0.000;
 		for(let i in datasets){
 			let val = datasets[i].getValue(key);
 			if(typeof val === "string"){

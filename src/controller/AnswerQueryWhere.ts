@@ -10,7 +10,7 @@ export default class AnswerQueryWhere{
 	private sections: Section[] = [];
 	private rooms: Room[] = [];
 	private type: InsightDatasetKind;
-	constructor(s: Section[],r: Room[], type: InsightDatasetKind){
+	constructor(s: Section[], r: Room[], type: InsightDatasetKind){
 
 		this.type = type;
 		if(this.type === InsightDatasetKind.Sections){
@@ -21,13 +21,28 @@ export default class AnswerQueryWhere{
 		// this.datasets = datasets;
 	}
 
-	public getDataset(){
+	public getDatasetValue(i: number, key: string): string | number{
 		if(this.type === InsightDatasetKind.Sections){
-			return this.sections;
+			if(this.sections.length <= i){
+				throw new InsightError();
+			}
+			return this.sections[i].getValue(key);
 		}else{
-			return this.rooms;
+			if(this.rooms.length <= i){
+				throw new InsightError();
+			}
+			return this.rooms[i].getValue(key);
 		}
 	}
+
+	public getDatasetLength(){
+		if(this.type === InsightDatasetKind.Sections){
+			return this.sections.length;
+		}else{
+			return this.rooms.length;
+		}
+	}
+
 
 	public handleWhere(node: QueryTreeNode){
 		if(node.hasChildren()){
@@ -110,11 +125,12 @@ export default class AnswerQueryWhere{
 				end = true;
 			}
 			// sectionIndex = [...Array(this.getDataset().length).keys()];
-			for (let i = 0; i < this.sections.length; i++) {
+
+			for (let i = 0; i < this.getDatasetLength(); i++) {
 				sectionIndex = [...this.handleQueryIs(start, end, i, node, value, sectionIndex)];
 			}
 		} else {
-			this.extracted(node, sectionIndex);
+			sectionIndex = this.extracted(node, sectionIndex);
 		}
 		return sectionIndex;
 	}
@@ -122,39 +138,40 @@ export default class AnswerQueryWhere{
 
 	private extracted(node: QueryTreeNode, sectionIndex: number[]) {
 		let value = node.getKey();
-		for (let i = 0; i < this.getDataset().length; i++) {
-			if (node.getKey() === "EQ") {
-				if (this.getDataset()[i].getValue(node.getChildrenString()[0]) === node.getValue()) {
+		for (let i = 0; i < this.getDatasetLength(); i++) {
+			if (value === "EQ") {
+				if (this.getDatasetValue(i, String(node.getChildrenString()[0])) === node.getValue()) {
 					sectionIndex.push(i); // if a section matches, add its index
 				}
-			} else if (node.getKey() === "GT") {
-				if (this.getDataset()[i].getValue(node.getChildrenString()[0]) > Number(node.getValue())) {
+			} else if (value === "GT") {
+				if (this.getDatasetValue(i, String(node.getChildrenString()[0]))  > Number(node.getValue())) {
 					sectionIndex.push(i); // if a section matches, add its index
 				}
-			} else if (node.getKey() === "LT") {
-				if (this.getDataset()[i].getValue(node.getChildrenString()[0]) < Number(node.getValue())) {
+			} else if (value === "LT") {
+				if (this.getDatasetValue(i, String(node.getChildrenString()[0]))  < Number(node.getValue())) {
 					sectionIndex.push(i); // if a section matches, add its index
 				}
 			}
 		}
+		return sectionIndex;
 	}
 
 	private handleQueryIs(start: boolean, end: boolean, i: number, node: QueryTreeNode,
 		value: string, sectionIndex: number[]) {
 		if (start && end) {
-			if (String(this.getDataset()[i].getValue(node.getChildrenString()[0])).includes(value)) {
+			if (String(this.getDatasetValue(i, String(node.getChildrenString()[0]))).includes(value)) {
 				sectionIndex.push(i);
 			}
 		} else if (start) {
-			if (this.getDataset()[i].getValue(node.getChildrenString()[0]).toString().endsWith(value)) {
+			if (this.getDatasetValue(i, String(node.getChildrenString()[0])).toString().endsWith(value)) {
 				sectionIndex.push(i);
 			}
 		} else if (end) {
-			if (String(this.getDataset()[i].getValue(node.getChildrenString()[0])).startsWith(value)) {
+			if (String(this.getDatasetValue(i, String(node.getChildrenString()[0]))).startsWith(value)) {
 				sectionIndex.push(i);
 			}
 		} else {
-			if (this.getDataset()[i].getValue(node.getChildrenString()[0]) === value) {
+			if (this.getDatasetValue(i, String(node.getChildrenString()[0])) === value) {
 				// if a section matches, add its index
 				sectionIndex.push(i);
 			}

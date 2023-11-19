@@ -5,7 +5,7 @@ import {
 	InsightError,
 	InsightResult,
 	NotFoundError,
-	ResultTooLargeError
+	ResultTooLargeError,
 } from "./IInsightFacade";
 import DataSetHelper from "./DataSetHelper";
 import * as fs from "fs-extra";
@@ -26,8 +26,7 @@ import AnswerQueryOption from "./AnswerQueryOption";
  */
 
 export default class InsightFacade implements IInsightFacade {
-
-	private idAndDatasets: {[key: string]: {kind: InsightDatasetKind, data: any[]}} = {};
+	private idAndDatasets: {[key: string]: {kind: InsightDatasetKind; data: any[]}} = {};
 	private querybuilder: QueryBuilder;
 	private sections: Section[] = [];
 	private rooms: Room[] = [];
@@ -38,7 +37,6 @@ export default class InsightFacade implements IInsightFacade {
 		this.idAndDatasets = this.loadFromDisk();
 		this.querybuilder = new QueryBuilder();
 	}
-
 
 	public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
 		return new Promise<string[]>((resolve, reject) => {
@@ -89,11 +87,13 @@ export default class InsightFacade implements IInsightFacade {
 				reject(new NotFoundError("The input id did not exist!"));
 			} else {
 				delete this.idAndDatasets[id];
-				this.writeToFiles().then(() => {
-					resolve(id);
-				}).catch((err) => {
-					reject(err);
-				});
+				this.writeToFiles()
+					.then(() => {
+						resolve(id);
+					})
+					.catch((err) => {
+						reject(err);
+					});
 			}
 		});
 	}
@@ -104,19 +104,18 @@ export default class InsightFacade implements IInsightFacade {
 			list.push({
 				id: key,
 				kind: value.kind,
-				numRows: value.data.length
+				numRows: value.data.length,
 			});
 		}
 		return Promise.resolve(list);
 	}
-
 
 	public loadFromDisk() {
 		if (!fs.existsSync("./data/datasets.json")) {
 			return {};
 		}
 		let diskJson = JSON.parse(fs.readFileSync("./data/datasets.json").toString());
-		let ret: {[key: string]: {kind: InsightDatasetKind, data: any[]}} = {};
+		let ret: {[key: string]: {kind: InsightDatasetKind; data: any[]}} = {};
 		Object.keys(diskJson).forEach(function (key) {
 			// each id is a key
 			let sectionList: Section[] = [];
@@ -124,25 +123,33 @@ export default class InsightFacade implements IInsightFacade {
 
 			ret[key] = {kind: diskJson[key].kind, data: []};
 			// ret[key].kind = diskJson[key].kind;
-			if (diskJson[key].kind === InsightDatasetKind.Sections){
+			if (diskJson[key].kind === InsightDatasetKind.Sections) {
 				for (let r of diskJson[key].data) {
-					let s = new Section(r["uuid"], r["id"], r["title"], r["instructor"], r["dept"],
-						r["year"], r["avg"], r["pass"], r["fail"], r["audit"]);
+					let s = new Section(
+						r["uuid"],
+						r["id"],
+						r["title"],
+						r["instructor"],
+						r["dept"],
+						r["year"],
+						r["avg"],
+						r["pass"],
+						r["fail"],
+						r["audit"]
+					);
 					sectionList.push(s);
 				}
 				ret[key].data = sectionList;
-			}else if(diskJson[key].kind === InsightDatasetKind.Rooms){
+			} else if (diskJson[key].kind === InsightDatasetKind.Rooms) {
 				for (let i of diskJson[key].data) {
-					let r = new Room(i["fullname"], i["number"],i["seats"], i["furniture"], i["type"]);
-					r.setBuildingValue(i["shortname"],i["name"],i["address"], i["href"], i["lat"], i["lon"]);
+					let r = new Room(i["fullname"], i["number"], i["seats"], i["furniture"], i["type"]);
+					r.setBuildingValue(i["shortname"], i["name"], i["address"], i["href"], i["lat"], i["lon"]);
 					roomList.push(r);
 				}
 				ret[key].data = roomList;
 			}
-
 		});
 		return ret;
-
 	}
 
 	public performQuery(query: unknown): Promise<InsightResult[]> {
@@ -177,7 +184,7 @@ export default class InsightFacade implements IInsightFacade {
 		return Promise.resolve(result);
 	}
 
-	public getDatasetLength(){
+	public getDatasetLength() {
 		if (this.kind === InsightDatasetKind.Sections) {
 			return this.sections.length;
 		} else {
@@ -212,14 +219,14 @@ export default class InsightFacade implements IInsightFacade {
 					if (typeof column !== "string" && !Array.isArray(column)) {
 						throw new InsightError("col type error");
 					}
-					let transRes: [{[key: string]: number | string;}] = trans.getTransformedList();
+					let transRes: [{[key: string]: number | string}] = trans.getTransformedList();
 					let tempRes: InsightResult[] = [];
 					this.extracted(transRes, column, tempRes);
 					if (n.getChildren().length === 2) {
 						let order = n.getChildren()[1];
-						if(order.hasChildren()){
+						if (order.hasChildren()) {
 							res = this.orderHasChildren(order, option, tempRes);
-						}else{
+						} else {
 							let key = this.getKey(order);
 							let arr = [];
 							arr.push(key);
@@ -264,14 +271,15 @@ export default class InsightFacade implements IInsightFacade {
 			throw new InsightError("188");
 		}
 		if (trans.getTransSize() > 5000) {
-			throw new ResultTooLargeError("The result is too big. Only queries with a maximum of 5000 " +
-				"results are supported.");
+			throw new ResultTooLargeError(
+				"The result is too big. Only queries with a maximum of 5000 " + "results are supported."
+			);
 		}
 	}
 
 	private extracted(transRes: [{[p: string]: number | string}], column: string | string[], tempRes: InsightResult[]) {
 		for (let t in transRes) {
-			let temp: {[key: string]: number | string;} = {};
+			let temp: {[key: string]: number | string} = {};
 			let obj = transRes[t];
 			for (let i of column) {
 				if (PerformQueryHelper.isCustomField(i)) {
@@ -279,7 +287,6 @@ export default class InsightFacade implements IInsightFacade {
 				} else {
 					temp[this.querybuilder.getId() + "_" + i] = transRes[t][i];
 				}
-
 			}
 
 			// console.log(temp);
@@ -287,4 +294,3 @@ export default class InsightFacade implements IInsightFacade {
 		}
 	}
 }
-

@@ -7,65 +7,71 @@ import PerformQueryHelper from "./PerformQueryHelper";
 export default class QueryOptionBuilder {
 	private options: QueryTreeNode;
 	private id: string;
-	private type: InsightDatasetKind|undefined = undefined;
+	private type: InsightDatasetKind | undefined = undefined;
 	private applyKey: string[];
 	private groupKey: string[];
-	constructor(){
+	constructor() {
 		this.options = new QueryTreeNode("OPTIONS", undefined);
 		this.id = "";
 		this.applyKey = [];
 		this.groupKey = [];
 	}
 
-	public checkOptionTypeKey(parsedOption: any){
-		if(typeof parsedOption !== "object" || parsedOption instanceof Array){
+	public checkOptionTypeKey(parsedOption: any) {
+		if (typeof parsedOption !== "object" || parsedOption instanceof Array) {
 			// console.log("line 103 OPTIONS must be object");
 			throw new InsightError();
 		}
 	}
 
-	public buildOption(options: object, columns: string[], order: object|string,  id: string,
-		type: InsightDatasetKind|undefined, applyCol: string[], groupCol: string[]){
+	public buildOption(
+		options: object,
+		columns: string[],
+		order: object | string,
+		id: string,
+		type: InsightDatasetKind | undefined,
+		applyCol: string[],
+		groupCol: string[]
+	) {
 		this.id = id;
 		this.type = type;
 		this.applyKey = applyCol;
 		this.groupKey = groupCol;
-		for(let key in options){
-			if(key !== "COLUMNS" && key !== "ORDER"){
+		for (let key in options) {
+			if (key !== "COLUMNS" && key !== "ORDER") {
 				throw new InsightError("Invalid keys in OPTIONS");
 			}
 		}
-		this.handleOptions(options, columns, order,this.options);
+		this.handleOptions(options, columns, order, this.options);
 		return this.options;
 	}
 
-	public handleOptions(options: object, columns: string[], order: object|string, root: QueryTreeNode){
-
-		let col =  this.buildColumn(columns);
+	public handleOptions(options: object, columns: string[], order: object | string, root: QueryTreeNode) {
+		let col = this.buildColumn(columns);
 		root.addChildren(col);
 
-		if(order !== undefined){
-			if(typeof order === "string"){
+		if (order !== undefined) {
+			if (typeof order === "string") {
 				root = this.handleOrderStr(order, columns, root);
-			}else if(typeof order === "object"){
+			} else if (typeof order === "object") {
 				root = this.handleOrderObj(order, columns, root);
-			}else{
+			} else {
 				throw new InsightError("Invalid ORDER type");
 			}
 		}
 	}
 
-	public buildColumn( columns: string[]){
+	public buildColumn(columns: string[]) {
 		let newCol = [];
 
-		for(let str in columns){
-			let tempCol = this.checkKeyValue(columns[str],undefined,undefined);
+		for (let str in columns) {
+			let tempCol = this.checkKeyValue(columns[str], undefined, undefined);
 			newCol.push(tempCol);
 		}
 		return new QueryTreeNode("COLUMNS", newCol);
 	}
 
-	private handleOrderStr(order: string, columns: string[], root: QueryTreeNode){
+	private handleOrderStr(order: string, columns: string[], root: QueryTreeNode) {
 		if (!columns.includes(order)) {
 			// console.log("ORDER key must be in COLUMNS");
 			throw new InsightError();
@@ -83,90 +89,88 @@ export default class QueryOptionBuilder {
 		let hasKeys = false;
 
 		temp = new QueryTreeNode("ORDER", undefined);
-		for(let key in order){
-			if(key === "dir"){
+		for (let key in order) {
+			if (key === "dir") {
 				hasDir = true;
 				let dir = order[key as keyof typeof order];
-				if(typeof dir !== "string"){
+				if (typeof dir !== "string") {
 					throw new InsightError("Invalid dir type in ORDER");
-				}else if(dir !== "UP" && dir !== "DOWN"){
+				} else if (dir !== "UP" && dir !== "DOWN") {
 					throw new InsightError("Invalid dir value in ORDER");
-				}else{
+				} else {
 					let dirNode = new QueryTreeNode("dir", dir);
 					temp.addChildren(dirNode);
 				}
-			}else if(key === "keys"){
+			} else if (key === "keys") {
 				hasKeys = true;
 				let keys = order[key as keyof typeof order];
 				PerformQueryHelper.checkIsNonEmptyArray(keys);
 				let tempArr: string[] = [];
-				for(let k in Array(keys)){
-					if (!columns.includes(keys[k])){
+				for (let k in Array(keys)) {
+					if (!columns.includes(keys[k])) {
 						// console.log(keys);
 						// console.log(k);
 						throw new InsightError("ORDER key must be in COLUMNS");
-					}else{
+					} else {
 						let str = this.getOrderKeyNoUnderScore(keys[k]);
 						tempArr.push(str);
 					}
 				}
 				let keysNode = new QueryTreeNode("keys", tempArr);
 				temp.addChildren(keysNode);
-			}else{
+			} else {
 				throw new InsightError("Invalid keys in ORDER");
 			}
 		}
-		if(hasDir && hasKeys){
+		if (hasDir && hasKeys) {
 			root.addChildren(temp);
 			return root;
-		}else{
+		} else {
 			throw new InsightError("Must have both dir and keys in ORDER");
 		}
 	}
 
-	public checkKeyValue(str: string, type: string|undefined, value: string|number|undefined){
-
+	public checkKeyValue(str: string, type: string | undefined, value: string | number | undefined) {
 		// can be either mkey, skey or applykey
 		let index = str.search("_");
-		if(index === -1) {
-			if(this.applyKey.includes(str)){
+		if (index === -1) {
+			if (this.applyKey.includes(str)) {
 				// in applykey
 				return str;
-			}else{
+			} else {
 				throw new InsightError("Invalid key neither applykey nor mkey/skey");
 			}
 		}
-		if((str.match(/_/g) || []).length > 1){
+		if ((str.match(/_/g) || []).length > 1) {
 			throw new InsightError("more than 1 underscore in key");
 		}
 
 		// has only one underscore, check id
-		if(this.id === ""){
-			this.id = str.substring(0,index);
-		}else if(this.id !== str.substring(0,index)){
+		if (this.id === "") {
+			this.id = str.substring(0, index);
+		} else if (this.id !== str.substring(0, index)) {
 			throw new InsightError("referenced two datasets");
 		}
 		str = str.substring(index + 1);
 
-		if(this.groupKey.length !== 0 && !this.groupKey.includes(str)){
+		if (this.groupKey.length !== 0 && !this.groupKey.includes(str)) {
 			throw new InsightError("Keys in COLUMNS must be in GROUP or APPLY when TRANSFORMATIONS is present");
 		}
 		// check type
 		let currType = PerformQueryHelper.checkKeyType(str);
-		if(typeof currType === "string"){
-			if(this.type === undefined){
+		if (typeof currType === "string") {
+			if (this.type === undefined) {
 				this.type = currType;
-			}else if(this.type !== currType){
+			} else if (this.type !== currType) {
 				throw new InsightError("OPTIONS has invalid value type");
 			}
-		}else{
+		} else {
 			throw new InsightError("WHERE has invalid value type");
 		}
 		return str; // value without id
 	}
 
-
-	public getOrderKeyNoUnderScore(order: string){
+	public getOrderKeyNoUnderScore(order: string) {
 		let index = order.search("_");
 		let str;
 		if (index === -1) {
@@ -177,12 +181,11 @@ export default class QueryOptionBuilder {
 		return str;
 	}
 
-	public getId(){
+	public getId() {
 		return this.id;
 	}
 
-	public getType(){
+	public getType() {
 		return this.type;
 	}
-
 }

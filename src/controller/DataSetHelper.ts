@@ -48,7 +48,7 @@ export default class DataSetHelper {
 			.then((buildingsWithGeoLocation) => {
 				const buildingPromise: Array<Promise<string>> = [];
 				buildings.forEach((building) => {
-					const file = contentZip.file(building["href"].substring(2,building["href".length]));
+					const file = contentZip.file(building["href"].substring(2, building["href".length]));
 					if (file !== null) {
 						buildingPromise.push(file.async("text"));
 					}
@@ -60,7 +60,7 @@ export default class DataSetHelper {
 					const roomNode = parse5.parse(roomString);
 					rooms.push(...DataSetHelper.findTheRoomTables(roomNode));
 				}
-				DataSetHelper.mapRoomstoBuilding(rooms,buildings);
+				DataSetHelper.mapRoomstoBuilding(rooms, buildings);
 				return rooms;
 			})
 			.catch((error) => {
@@ -74,8 +74,8 @@ export default class DataSetHelper {
 		while (indexhtmNodes.length > 0) {
 			const node = indexhtmNodes.pop();
 			const isTable = node !== undefined && node.nodeName === "table";
-			const isClass = node !== undefined && "attrs" in node && node.attrs.length > 0
-				&& DataSetHelper.isCorrectElement(node.attrs, "class", "views-table cols-5 table");
+			const isClass = node !== undefined && "attrs" in node && node.attrs.length > 0 &&
+				DataSetHelper.isCorrectElement(node.attrs, "class", "views-table cols-5 table");
 
 			if (isTable && isClass) {
 				buildings.push(...DataSetHelper.retrieveBuildings(node));
@@ -97,12 +97,15 @@ export default class DataSetHelper {
 		let rooms: any[] = [];
 		while (indexhtmNodes.length > 0) {
 			const node = indexhtmNodes.pop();
-			const isInfo = node !== undefined && "attrs" in node && node.attrs.length > 0
-				&& DataSetHelper.isCorrectElement(node.attrs,"id","building-info");
+			const isInfo =
+				node !== undefined && "attrs" in node && node.attrs.length > 0 &&
+				DataSetHelper.isCorrectElement(node.attrs, "id", "building-info");
 			if (isInfo) {
-				if ("childNodes" in node && "childNodes" in node.childNodes[1]
-					&& "childNodes" in node.childNodes[1].childNodes[0]
-					&& "value" in node.childNodes[1].childNodes[0].childNodes[0]) {
+				if (
+					"childNodes" in node && "childNodes" in node.childNodes[1] &&
+					"childNodes" in node.childNodes[1].childNodes[0] &&
+					"value" in node.childNodes[1].childNodes[0].childNodes[0]
+				) {
 					buildingName = node.childNodes[1].childNodes[0].childNodes[0].value;
 				}
 			}
@@ -115,10 +118,11 @@ export default class DataSetHelper {
 			// < table class="views-table cols-5 table">
 			const node = indexhtmNodes.pop();
 			const isTable = node !== undefined && node.nodeName === "table";
-			const isClass = node !== undefined && "attrs" in node && node.attrs.length > 0
-				&& DataSetHelper.isCorrectElement(node.attrs,"class","views-table cols-5 table");
+			const isClass =
+				node !== undefined && "attrs" in node && node.attrs.length > 0 &&
+				DataSetHelper.isCorrectElement(node.attrs, "class", "views-table cols-5 table");
 			if (isTable && isClass) {
-				rooms.push(...DataSetHelper.retriveRooms(node,buildingName));
+				rooms.push(...DataSetHelper.retriveRooms(node, buildingName));
 			}
 			if (node !== undefined && "childNodes" in node) {
 				indexhtmNodes.push(...node.childNodes);
@@ -130,14 +134,14 @@ export default class DataSetHelper {
 	private static retriveRooms(node: Element, buildingName: string): any[] {
 		const buildings: any[] = [];
 		let tbody: any;
-		for(const childNode of node.childNodes) {
+		for (const childNode of node.childNodes) {
 			if (childNode.nodeName === "tbody") {
 				tbody = childNode;
 			}
 		}
 		for (const childNode of tbody.childNodes) {
 			if (childNode.nodeName === "tr") {
-				buildings.push(DataSetHelper.generateRoom(childNode,buildingName));
+				buildings.push(DataSetHelper.generateRoom(childNode, buildingName));
 			}
 		}
 		return buildings;
@@ -148,21 +152,29 @@ export default class DataSetHelper {
 		for (const childNode of node.childNodes) {
 			if (childNode.nodeName === "td") {
 				const isClass = "attrs" in childNode && childNode.attrs.length > 0;
-				if (isClass
-					&& DataSetHelper.isCorrectElement(childNode.attrs,
-						"class","views-field views-field-field-room-number")) {
+				if (
+					isClass && DataSetHelper.isCorrectElement(
+						childNode.attrs, "class", "views-field views-field-field-room-number"
+					)
+				) {
 					room["number"] = childNode.childNodes[1].childNodes[0].value.trim();
-				} else if (isClass
-					&& DataSetHelper.isCorrectElement(childNode.attrs,"class",
-						"views-field views-field-field-room-capacity")) {
+				} else if (
+					isClass &&
+					DataSetHelper.isCorrectElement(
+						childNode.attrs, "class", "views-field views-field-field-room-capacity"
+					)
+				) {
 					room["seats"] = Number(childNode.childNodes[0].value.trim());
-				} else if (isClass
-					&& DataSetHelper.isCorrectElement(childNode.attrs,"class",
-						"views-field views-field-field-room-furniture")) {
+				} else if (
+					isClass && DataSetHelper.isCorrectElement(
+						childNode.attrs, "class", "views-field views-field-field-room-furniture"
+					)
+				) {
 					room["furniture"] = childNode.childNodes[0].value.trim();
-				} else if (isClass
-					&& DataSetHelper.isCorrectElement(childNode.attrs,"class",
-						"views-field views-field-field-room-type")) {
+				} else if (
+					isClass &&
+					DataSetHelper.isCorrectElement(childNode.attrs, "class", "views-field views-field-field-room-type")
+				) {
 					room["type"] = childNode.childNodes[0].value.trim();
 				}
 			}
@@ -177,19 +189,15 @@ export default class DataSetHelper {
 				return room["fullname"] === building["fullname"];
 			});
 			for (const room of roomsInBuilding) {
-				if(room instanceof Room){
+				if (room instanceof Room) {
 					let name = room.getValue("shortname") + "_" + room.getValue("number");
-					room.setBuildingValue(building["shortname"], name, building["address"], building["href"],
-						building["lat"], building["lon"]);
-				}else{
+					room.setBuildingValue(
+						building["shortname"], name, building["address"], building["href"], building["lat"],
+						building["lon"]
+					);
+				} else {
 					throw new InsightError("dataset helper 185");
 				}
-				// room["shortname"] = building["shortname"];
-				// room["address"] = building["address"];
-				// room["href"] = building["href"];
-				// room["name"] = room["shortname"] + "_" + room["number"];
-				// room["lat"] = building["lat"];
-				// room["lon"] = building["lon"];
 			}
 		}
 	}
@@ -204,28 +212,13 @@ export default class DataSetHelper {
 			let results = jsonF["result"];
 			for (let r of results) {
 				const containAll: boolean =
-					"id" in r &&
-					"Course" in r &&
-					"Title" in r &&
-					"Professor" in r &&
-					"Subject" in r &&
-					"Avg" in r &&
-					"Pass" in r &&
-					"Fail" in r &&
-					"Audit" in r;
+					"id" in r && "Course" in r && "Title" in r && "Professor" in r && "Subject" in r && "Avg" in r &&
+					"Pass" in r && "Fail" in r && "Audit" in r;
 				if (containAll) {
 					const year = r["Section"] === "overall" ? 1900 : Number(r["Year"]);
 					let s = new Section(
-						r["id"].toString(),
-						r["Course"],
-						r["Title"],
-						r["Professor"],
-						r["Subject"],
-						year,
-						r["Avg"],
-						r["Pass"],
-						r["Fail"],
-						r["Audit"]
+						r["id"].toString(), r["Course"], r["Title"], r["Professor"], r["Subject"], year, r["Avg"],
+						r["Pass"], r["Fail"], r["Audit"]
 					);
 					sectionList.push(s);
 				}
@@ -237,7 +230,7 @@ export default class DataSetHelper {
 		return sectionList;
 	}
 
-	private static isCorrectElement(attrs: any[],attributeName: string, attributeValue: string): boolean {
+	private static isCorrectElement(attrs: any[], attributeName: string, attributeValue: string): boolean {
 		for (const attr of attrs) {
 			if ("name" in attr && attr.name === attributeName) {
 				if ("value" in attr && attr.value === attributeValue) {
@@ -251,7 +244,7 @@ export default class DataSetHelper {
 	private static retrieveBuildings(node: any): any[] {
 		const buildings: any[] = [];
 		let tbody: any;
-		for(const childNode of node.childNodes) {
+		for (const childNode of node.childNodes) {
 			if (childNode.nodeName === "tbody") {
 				tbody = childNode;
 			}
@@ -269,20 +262,29 @@ export default class DataSetHelper {
 		for (const childNode of node.childNodes) {
 			if (childNode.nodeName === "td") {
 				const isClass = "attrs" in childNode && childNode.attrs.length > 0;
-				if (isClass
-					&& DataSetHelper.isCorrectElement(childNode.attrs,"class",
-						"views-field views-field-field-building-code")) {
+				if (
+					isClass &&
+					DataSetHelper.isCorrectElement(
+						childNode.attrs, "class", "views-field views-field-field-building-code"
+					)
+				) {
 					building["shortname"] = childNode.childNodes[0].value.trim();
-				} else if (isClass && DataSetHelper.isCorrectElement(childNode.attrs,"class",
-					"views-field views-field-title")) {
+				} else if (
+					isClass &&
+					DataSetHelper.isCorrectElement(childNode.attrs, "class", "views-field views-field-title")
+				) {
 					building["fullname"] = childNode.childNodes[1].childNodes[0].value.trim();
-				} else if (isClass &&
-					DataSetHelper.isCorrectElement(childNode.attrs,"class",
-						"views-field views-field-field-building-address")) {
+				} else if (
+					isClass &&
+					DataSetHelper.isCorrectElement(
+						childNode.attrs, "class", "views-field views-field-field-building-address"
+					)
+				) {
 					building["address"] = childNode.childNodes[0].value.trim();
-				} else if (isClass &&
-					DataSetHelper.isCorrectElement(childNode.attrs,"class",
-						"views-field views-field-nothing")) {
+				} else if (
+					isClass &&
+					DataSetHelper.isCorrectElement(childNode.attrs, "class", "views-field views-field-nothing")
+				) {
 					building["href"] = childNode.childNodes[1].attrs[0].value.trim();
 				}
 			}

@@ -483,7 +483,7 @@ describe("InsightFacade", function () {
 	 * You can still make tests the normal way, this is just a convenient tool for a majority of queries.
 	 */
 	describe("PerformQuery", () => {
-		before( function () {
+		before(function () {
 			console.info(`Before: ${this.test?.parent?.title}`);
 
 			facade = new InsightFacade();
@@ -527,19 +527,12 @@ describe("InsightFacade", function () {
 						],
 					},
 					OPTIONS: {
-
-						COLUMNS: [
-							"sections_dept",
-							"sections_avg"
-						],
+						COLUMNS: ["sections_dept", "sections_avg"],
 						ORDER: {
 							dir: "UP",
-							keys: [
-								"sections_avg"
-							]
-						}
-					}
-
+							keys: ["sections_avg"],
+						},
+					},
 				});
 
 				expect(result).to.deep.equal([
@@ -604,93 +597,93 @@ describe("InsightFacade", function () {
 		//
 		// });
 
-
-		it("sample", async function() {
+		it("sample", async function () {
 			// facade = new InsightFacade();
 			const result = await facade.performQuery({
 				WHERE: {
 					IS: {
-						sections_dept: "phil"
-					}
+						sections_dept: "phil",
+					},
 				},
 				OPTIONS: {
-					COLUMNS: [
-						"sections_id"
-					],
-					ORDER:{
-						dir:"UP",
-						keys:["sections_id"]
-					}
+					COLUMNS: ["sections_id"],
+					ORDER: {
+						dir: "UP",
+						keys: ["sections_id"],
+					},
 				},
 				TRANSFORMATIONS: {
-					GROUP: [
-						"sections_id"
-					],
+					GROUP: ["sections_id"],
 					APPLY: [
 						{
 							minAVG: {
-								MIN: "sections_avg"
-							}
-						}
-					]
-				}
+								MIN: "sections_avg",
+							},
+						},
+					],
+				},
 			});
-			expect(result).have.deep.members([{sections_id:"100"},{sections_id:"101"},
-				{sections_id:"102"},{sections_id:"120"},
-				{sections_id:"125"},{sections_id:"150"},
-				{sections_id:"316"},{sections_id:"334"},
-				{sections_id:"364"},{sections_id:"371"},
-				{sections_id:"378"},{sections_id:"388"},
-				{sections_id:"464"},{sections_id:"485"},
-				{sections_id:"487"}, {sections_id:"585"},
-				{sections_id:"599"}]);
+			expect(result).have.deep.members([
+				{sections_id: "100"},
+				{sections_id: "101"},
+				{sections_id: "102"},
+				{sections_id: "120"},
+				{sections_id: "125"},
+				{sections_id: "150"},
+				{sections_id: "316"},
+				{sections_id: "334"},
+				{sections_id: "364"},
+				{sections_id: "371"},
+				{sections_id: "378"},
+				{sections_id: "388"},
+				{sections_id: "464"},
+				{sections_id: "485"},
+				{sections_id: "487"},
+				{sections_id: "585"},
+				{sections_id: "599"},
+			]);
 		});
 
-		it("sample2", async function() {
+		it("sample2", async function () {
 			// facade = new InsightFacade();
 			const result = await facade.performQuery({
 				WHERE: {
 					AND: [
 						{
 							IS: {
-								rooms_furniture: "*Tables*"
-							}
+								rooms_furniture: "*Tables*",
+							},
 						},
 						{
 							GT: {
-								rooms_seats: 300
-							}
-						}
-					]
+								rooms_seats: 300,
+							},
+						},
+					],
 				},
 				OPTIONS: {
-					COLUMNS: [
-						"rooms_shortname",
-						"maxSeats"
-					],
+					COLUMNS: ["rooms_shortname", "maxSeats"],
 					ORDER: {
 						dir: "DOWN",
-						keys: [
-							"maxSeats"
-						]
-					}
+						keys: ["maxSeats"],
+					},
 				},
 				TRANSFORMATIONS: {
-					GROUP: [
-						"rooms_shortname"
-					],
+					GROUP: ["rooms_shortname"],
 					APPLY: [
 						{
 							maxSeats: {
-								MAX: "rooms_seats"
-							}
-						}
-					]
-				}
+								MAX: "rooms_seats",
+							},
+						},
+					],
+				},
 			});
-			expect(result).have.deep.members([{rooms_shortname:"OSBO",maxSeats:442},
-				{rooms_shortname:"HEBB",maxSeats:375},{rooms_shortname:"LSC",maxSeats:350}]
-			);
+			expect(result).have.deep.members([
+				{rooms_shortname: "OSBO", maxSeats: 442},
+				{rooms_shortname: "HEBB", maxSeats: 375},
+				{rooms_shortname: "LSC", maxSeats: 350},
+			]);
 		});
 
 		after(function () {

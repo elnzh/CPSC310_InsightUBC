@@ -8,15 +8,14 @@ import {Room} from "./Room";
 import QueryOptionBuilder from "./QueryOptionBuilder";
 import QueryTransformationBuilder from "./QueryTransformationBuilder";
 
-export default class QueryBuilder{
-
+export default class QueryBuilder {
 	private id_str: string;
-	private type_str: InsightDatasetKind|undefined = undefined;
+	private type_str: InsightDatasetKind | undefined = undefined;
 	private applyKey_col: string[];
 	private whereBuilder: QueryWhereBuilder;
 	private optionBuilder: QueryOptionBuilder;
 	private transBuilder: QueryTransformationBuilder;
-	constructor(){
+	constructor() {
 		this.id_str = "";
 		this.applyKey_col = [];
 		this.whereBuilder = new QueryWhereBuilder();
@@ -25,20 +24,19 @@ export default class QueryBuilder{
 	}
 
 	public parseQuery(query: unknown) {
-        // check if query is a valid query
-		if(query === null || query === undefined || typeof query !== "object" ) {
-			// console.log("line 65 arg error");
+		// check if query is a valid query
+		if (query === null || query === undefined || typeof query !== "object") {
 			throw new InsightError();
 		}
 		let parsed;
-		try{
+		try {
 			parsed = JSON.parse(JSON.stringify(query));
 			// console.log(parsed);
-		}catch(err){
+		} catch (err) {
 			// console.log("line 74 invalid query string");
 			throw new InsightError("invalid query string");
 		}
-		if(parsed === undefined || parsed.WHERE === undefined || parsed.OPTIONS === undefined){
+		if (parsed === undefined || parsed.WHERE === undefined || parsed.OPTIONS === undefined) {
 			// console.log("line 79 query error");
 			throw new InsightError();
 		}
@@ -48,44 +46,43 @@ export default class QueryBuilder{
 		root.addChildren(where);
 		this.id_str = this.whereBuilder.getId();
 		this.type_str = this.whereBuilder.getType();
-		let trans: QueryTreeNode|undefined;
-		if(parsed.TRANSFORMATIONS !== undefined){
+		let trans: QueryTreeNode | undefined;
+		if (parsed.TRANSFORMATIONS !== undefined) {
 			this.transBuilder.checkTransformationTypeKey(parsed.TRANSFORMATIONS);
-			trans = this.transBuilder.buildTransformation(parsed.TRANSFORMATIONS, parsed.TRANSFORMATIONS.GROUP,
-				parsed.TRANSFORMATIONS.APPLY, this.id_str,this.type_str);
+			trans = this.transBuilder.buildTransformation(
+				parsed.TRANSFORMATIONS, parsed.TRANSFORMATIONS.GROUP, parsed.TRANSFORMATIONS.APPLY, this.id_str,
+				this.type_str
+			);
 			this.applyKey_col = this.transBuilder.getApplyKeyCol();
 			root.addChildren(trans);
-			if(this.id_str === ""){
-				this.id_str =  this.transBuilder.getId();
+			if (this.id_str === "") {
+				this.id_str = this.transBuilder.getId();
 			}
-			if(this.type_str === undefined){
-				this.type_str =  this.transBuilder.getType();
+			if (this.type_str === undefined) {
+				this.type_str = this.transBuilder.getType();
 			}
 		}
-
 		this.optionBuilder.checkOptionTypeKey(parsed.OPTIONS);
 		PerformQueryHelper.checkIsNonEmptyArray(parsed.OPTIONS.COLUMNS);
-		let options = this.optionBuilder.buildOption(parsed.OPTIONS, parsed.OPTIONS.COLUMNS,
-			parsed.OPTIONS.ORDER, this.id_str, this.type_str, this.applyKey_col,
-			this.transBuilder.getGroupKeyCol());
-		if(this.id_str === ""){
-			this.id_str =  this.optionBuilder.getId();
+		let options = this.optionBuilder.buildOption(
+			parsed.OPTIONS, parsed.OPTIONS.COLUMNS, parsed.OPTIONS.ORDER, this.id_str, this.type_str, this.applyKey_col,
+			this.transBuilder.getGroupKeyCol()
+		);
+		if (this.id_str === "") {
+			this.id_str = this.optionBuilder.getId();
 		}
-		if(this.type_str === undefined){
-			this.type_str =  this.optionBuilder.getType();
+		if (this.type_str === undefined) {
+			this.type_str = this.optionBuilder.getType();
 		}
 		root.addChildren(options);
 		return root;
-
 	}
 
-	public getId(){
+	public getId() {
 		return this.id_str;
 	}
 
-	public getType(){
+	public getType() {
 		return this.type_str;
 	}
-
-
 }

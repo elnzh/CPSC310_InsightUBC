@@ -1,6 +1,8 @@
 import express, {Application, Request, Response} from "express";
 import * as http from "http";
 import cors from "cors";
+import InsightFacade from "../controller/InsightFacade";
+import {InsightDatasetKind, InsightError} from "../controller/IInsightFacade";
 
 export default class Server {
 	private readonly port: number;
@@ -85,6 +87,8 @@ export default class Server {
 		// This is an example endpoint this you can invoke by accessing this URL in your browser:
 		// http://localhost:4321/echo/hello
 		this.express.get("/echo/:msg", Server.echo);
+		this.express.put("/dataset/:id/:kind", Server.addDataSet);
+		this.express.delete("/dataset/:id", Server.deleteDataSet);
 
 		// TODO: your other endpoints should go here
 	}
@@ -107,6 +111,48 @@ export default class Server {
 			return `${msg}...${msg}`;
 		} else {
 			return "Message not provided";
+		}
+	}
+
+	private static addDataSet(req: Request, res: Response) {
+		try {
+			console.log(`Server::addDataSet(..) - params: ${JSON.stringify(req.params)}`);
+			let kind: InsightDatasetKind;
+			if (req.params.kind === "sections") {
+				kind = InsightDatasetKind.Sections;
+			} else if (req.params.kind === "rooms") {
+				kind = InsightDatasetKind.Rooms;
+			} else {
+				throw new Error("Kind is invalid.");
+			}
+			const response = new InsightFacade().addDataset(req.params.id,req.body.toString("base64"),kind)
+				.then((result) => {
+					res.status(200).json({result: result});
+				})
+				.catch((err) => {
+					res.status(400).json({error: err});
+				});
+		} catch (err) {
+			res.status(400).json({error: err});
+		}
+	}
+
+	private static deleteDataSet(req: Request, res: Response) {
+		try {
+			console.log(`Server::deleteDataSet(..) - params: ${JSON.stringify(req.params)}`);
+			const response = new InsightFacade().removeDataset(req.params.id)
+				.then((result) => {
+					res.status(200).json({result: result});
+				})
+				.catch((err) => {
+					if (err.message === "The input id did not exist!") {
+						res.status(404).json({error: err});
+					} else {
+						res.status(400).json({error: err});
+					}
+				});
+		} catch (err) {
+			res.status(400).json({error: err});
 		}
 	}
 }

@@ -16,7 +16,7 @@ export default class Server {
 		this.port = port;
 		this.express = express();
 		Server.facade = new InsightFacade();
-		let sections = getContentFromArchives("pair.zip");
+		// let sections = getContentFromArchives("pair.zip");
 		// const res =  Server.facade.addDataset("sections", sections, InsightDatasetKind.Sections);
 		this.registerMiddleware();
 		this.registerRoutes();

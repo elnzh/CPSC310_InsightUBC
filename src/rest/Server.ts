@@ -3,7 +3,6 @@ import * as http from "http";
 import cors from "cors";
 import InsightFacade from "../controller/InsightFacade";
 import {InsightDatasetKind} from "../controller/IInsightFacade";
-import {getContentFromArchives} from "../../test/TestUtil";
 
 export default class Server {
 	private readonly port: number;
@@ -16,7 +15,7 @@ export default class Server {
 		this.port = port;
 		this.express = express();
 		Server.facade = new InsightFacade();
-		let sections = getContentFromArchives("pair.zip");
+		// let sections = getContentFromArchives("pair.zip");
 		// const res =  Server.facade.addDataset("sections", sections, InsightDatasetKind.Sections);
 		this.registerMiddleware();
 		this.registerRoutes();

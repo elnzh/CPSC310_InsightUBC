@@ -146,7 +146,7 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public performQuery(query: unknown): Promise<InsightResult[]> {
-		// gitinitialize querybuilder
+		// initialize querybuilder
 		this.querybuilder = new QueryBuilder();
 		let root = this.querybuilder.parseQuery(query);
 		let queryKind = this.querybuilder.getType();

@@ -141,6 +141,7 @@ export default class InsightFacade implements IInsightFacade {
 			}
 
 		});
+		this.idAndDatasets = ret;
 		return ret;
 
 	}

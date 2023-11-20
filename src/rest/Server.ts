@@ -3,6 +3,7 @@ import * as http from "http";
 import cors from "cors";
 import InsightFacade from "../controller/InsightFacade";
 import {InsightDatasetKind} from "../controller/IInsightFacade";
+import {getContentFromArchives} from "../../test/TestUtil";
 
 export default class Server {
 	private readonly port: number;
@@ -15,7 +16,8 @@ export default class Server {
 		this.port = port;
 		this.express = express();
 		Server.facade = new InsightFacade();
-
+		let sections = getContentFromArchives("pair.zip");
+		// const res =  Server.facade.addDataset("sections", sections, InsightDatasetKind.Sections);
 		this.registerMiddleware();
 		this.registerRoutes();
 
@@ -86,7 +88,7 @@ export default class Server {
 	private registerRoutes() {
 		// This is an example endpoint this you can invoke by accessing this URL in your browser:
 		// http://localhost:4321/echo/hello
-		this.express.get("/echo/:msg", Server.echo);
+		// this.express.get("/echo/:msg", Server.echo);
 
 		this.express.put("/dataset/:id/:kind", Server.addDataSet);
 		this.express.delete("/dataset/:id", Server.deleteDataSet);
@@ -118,20 +120,25 @@ export default class Server {
 
 	private static performQuery(req: Request, res: Response) {
 		try {
-
 			console.log(`Server::performQuery(..) - params: ${JSON.stringify(req.params)}`);
-			const arr = this.facade.performQuery(req.params.body);
-			res.status(200).json({result: arr});
+			const response =  new InsightFacade().performQuery(req.params.body).then((arr)=>{
+				res.status(200).json({result: arr});
+			}).catch((err)=>{
+				res.status(400).json({error: err});
+			});
 		} catch (err) {
 			res.status(400).json({error: err});
 		}
 	}
 
-	private static listDatasets(res: Response) {
+	private static listDatasets(req: Request, res: Response) {
 		try {
 			console.log("Server::listDatasets(..)");
-			const arr = this.facade.listDatasets();
-			res.status(200).json({result: arr});
+			const response =  new InsightFacade().listDatasets().then((arr)=>{
+				res.status(200).json({result: arr});
+			}).catch((err)=>{
+				res.status(400).json({error: err});
+			});
 		} catch (err) {
 			res.status(400).json({error: err});
 		}

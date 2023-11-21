@@ -12,11 +12,13 @@ describe("Facade D3", function () {
 	let server: Server;
 	let ZIP_FILE_DATA: string;
 
-	before(function () {
+	before(async function () {
 		facade = new InsightFacade();
 		server = new Server(4321);
+		await server.start();
 		// TODO: start server here once and handle errors properly
 		ZIP_FILE_DATA = getContentFromArchives("pair.zip");
+		// ZIP_FILE_DATA = "/Users/ellenzhang/Desktop/project_team213/test/resources/archives/pair.zip";
 	});
 
 	after(function () {
@@ -35,8 +37,30 @@ describe("Facade D3", function () {
 
 	it("PUT test for courses dataset", function () {
 		try {
-			return request("http://localhost:4321/")
-				.put("/dataset/")
+			return request("http://localhost:4321")
+				.put("/dataset/section/InsightDatasetKind.Sections")
+				.send(ZIP_FILE_DATA)
+				.set("Content-Type", "application/x-zip-compressed")
+				.then(function (res: Response) {
+					// some logging here please!
+					console.log(res.error);
+					expect(res.status).to.be.equal(200);
+				})
+				.catch(function (err) {
+					// some logging here please!
+					console.log(err);
+					expect.fail();
+				});
+		} catch (err) {
+			// and some more logging here!
+		}
+	});
+
+
+	it("DELETE test for courses dataset", function () {
+		try {
+			return request("http://localhost:4321")
+				.put("/dataset/sections")
 				.send(ZIP_FILE_DATA)
 				.set("Content-Type", "application/x-zip-compressed")
 				.then(function (res: Response) {

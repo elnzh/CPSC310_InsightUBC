@@ -123,10 +123,10 @@ export default class Server {
 			const response =  new InsightFacade().performQuery(req.params.body).then((arr)=>{
 				res.status(200).json({result: arr});
 			}).catch((err)=>{
-				res.status(400).json({error: err});
+				res.status(400).json({error:  String(err)});
 			});
 		} catch (err) {
-			res.status(400).json({error: err});
+			res.status(400).json({error:  String(err)});
 		}
 	}
 
@@ -136,10 +136,10 @@ export default class Server {
 			const response =  new InsightFacade().listDatasets().then((arr)=>{
 				res.status(200).json({result: arr});
 			}).catch((err)=>{
-				res.status(400).json({error: err});
+				res.status(400).json({error:  String(err)});
 			});
 		} catch (err) {
-			res.status(400).json({error: err});
+			res.status(400).json({error:  String(err)});
 		}
 	}
 
@@ -147,9 +147,9 @@ export default class Server {
 		try {
 			console.log(`Server::addDataSet(..) - params: ${JSON.stringify(req.params)}`);
 			let kind: InsightDatasetKind;
-			if (req.params.kind === "sections") {
+			if (req.params.kind === "sections" || req.params.kind === "InsightDatasetKind.Sections") {
 				kind = InsightDatasetKind.Sections;
-			} else if (req.params.kind === "rooms") {
+			} else if (req.params.kind === "rooms" || req.params.kind === "InsightDatasetKind.Rooms") {
 				kind = InsightDatasetKind.Rooms;
 			} else {
 				throw new Error("Kind is invalid.");
@@ -159,10 +159,10 @@ export default class Server {
 					res.status(200).json({result: result});
 				})
 				.catch((err) => {
-					res.status(400).json({error: err});
+					res.status(400).json({error: String(err)});
 				});
 		} catch (err) {
-			res.status(400).json({error: err});
+			res.status(400).json({error: String(err)});
 		}
 	}
 
@@ -175,13 +175,13 @@ export default class Server {
 				})
 				.catch((err) => {
 					if (err.message === "The input id did not exist!") {
-						res.status(404).json({error: err});
+						res.status(404).json({error: String(err)});
 					} else {
-						res.status(400).json({error: err});
+						res.status(400).json({error: String(err)});
 					}
 				});
 		} catch (err) {
-			res.status(400).json({error: err});
+			res.status(400).json({error: String(err)});
 		}
 	}
 }

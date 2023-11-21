@@ -8,13 +8,13 @@ export default class Server {
 	private readonly port: number;
 	private express: Application;
 	private server: http.Server | undefined;
-	private static facade: InsightFacade;
+	// private static facade: InsightFacade;
 
 	constructor(port: number) {
 		console.info(`Server::<init>( ${port} )`);
 		this.port = port;
 		this.express = express();
-		Server.facade = new InsightFacade();
+		// Server.facade = new InsightFacade();
 		// let sections = getContentFromArchives("pair.zip");
 		// const res =  Server.facade.addDataset("sections", sections, InsightDatasetKind.Sections);
 		this.registerMiddleware();
@@ -120,7 +120,7 @@ export default class Server {
 	private static performQuery(req: Request, res: Response) {
 		try {
 			console.log(`Server::performQuery(..) - params: ${JSON.stringify(req.params)}`);
-			const response =  new InsightFacade().performQuery(req.params.body).then((arr)=>{
+			const response =  new InsightFacade().performQuery(req.body).then((arr)=>{
 				res.status(200).json({result: arr});
 			}).catch((err)=>{
 				res.status(400).json({error:  String(err)});
@@ -147,9 +147,9 @@ export default class Server {
 		try {
 			console.log(`Server::addDataSet(..) - params: ${JSON.stringify(req.params)}`);
 			let kind: InsightDatasetKind;
-			if (req.params.kind === "sections" || req.params.kind === "InsightDatasetKind.Sections") {
+			if (req.params.kind === "sections" ) {
 				kind = InsightDatasetKind.Sections;
-			} else if (req.params.kind === "rooms" || req.params.kind === "InsightDatasetKind.Rooms") {
+			} else if (req.params.kind === "rooms") {
 				kind = InsightDatasetKind.Rooms;
 			} else {
 				throw new Error("Kind is invalid.");
@@ -159,6 +159,7 @@ export default class Server {
 					res.status(200).json({result: result});
 				})
 				.catch((err) => {
+					console.log(err);
 					res.status(400).json({error: String(err)});
 				});
 		} catch (err) {

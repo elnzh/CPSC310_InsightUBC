@@ -5,7 +5,7 @@ import {Room} from "./Room";
 import * as parse5 from "parse5";
 import {Document, Element, TextNode} from "parse5/dist/tree-adapters/default";
 import * as http from "http";
-import GeoLocationHelper from "./GeoResponse";
+import  GeoLocationHelper from "./GeoResponse";
 export default class DataSetHelper {
 	public static addSectionDataset(content: string): Promise<Section[]> {
 		return JSZip.loadAsync(content, {base64: true})

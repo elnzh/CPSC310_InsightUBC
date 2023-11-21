@@ -2,25 +2,28 @@ import express, {Application, Request, Response} from "express";
 import * as http from "http";
 import cors from "cors";
 import InsightFacade from "../controller/InsightFacade";
-import {InsightDatasetKind, InsightError} from "../controller/IInsightFacade";
+import {InsightDatasetKind} from "../controller/IInsightFacade";
 
 export default class Server {
 	private readonly port: number;
 	private express: Application;
 	private server: http.Server | undefined;
+	// private static facade: InsightFacade;
 
 	constructor(port: number) {
 		console.info(`Server::<init>( ${port} )`);
 		this.port = port;
 		this.express = express();
-
+		// Server.facade = new InsightFacade();
+		// let sections = getContentFromArchives("pair.zip");
+		// const res =  Server.facade.addDataset("sections", sections, InsightDatasetKind.Sections);
 		this.registerMiddleware();
 		this.registerRoutes();
 
 		// NOTE: you can serve static frontend files in from your express server
 		// by uncommenting the line below. This makes files in ./frontend/public
 		// accessible at http://localhost:<port>/
-		// this.express.use(express.static("./frontend/public"))
+		this.express.use(express.static("./frontend/public"));
 	}
 
 	/**
@@ -37,16 +40,14 @@ export default class Server {
 				console.error("Server::start() - server already listening");
 				reject();
 			} else {
-				this.server = this.express
-					.listen(this.port, () => {
-						console.info(`Server::start() - server listening on port: ${this.port}`);
-						resolve();
-					})
-					.on("error", (err: Error) => {
-						// catches errors in server start
-						console.error(`Server::start() - server ERROR: ${err.message}`);
-						reject(err);
-					});
+				this.server = this.express.listen(this.port, () => {
+					console.info(`Server::start() - server listening on port: ${this.port}`);
+					resolve();
+				}).on("error", (err: Error) => {
+					// catches errors in server start
+					console.error(`Server::start() - server ERROR: ${err.message}`);
+					reject(err);
+				});
 			}
 		});
 	}
@@ -86,11 +87,13 @@ export default class Server {
 	private registerRoutes() {
 		// This is an example endpoint this you can invoke by accessing this URL in your browser:
 		// http://localhost:4321/echo/hello
-		this.express.get("/echo/:msg", Server.echo);
+		// this.express.get("/echo/:msg", Server.echo);
+
 		this.express.put("/dataset/:id/:kind", Server.addDataSet);
 		this.express.delete("/dataset/:id", Server.deleteDataSet);
+		this.express.post("/query", Server.performQuery);
+		this.express.get("/datasets", Server.listDatasets);
 
-		// TODO: your other endpoints should go here
 	}
 
 	// The next two methods handle the echo service.
@@ -114,11 +117,37 @@ export default class Server {
 		}
 	}
 
+	private static performQuery(req: Request, res: Response) {
+		try {
+			console.log(`Server::performQuery(..) - params: ${JSON.stringify(req.params)}`);
+			const response =  new InsightFacade().performQuery(req.body).then((arr)=>{
+				res.status(200).json({result: arr});
+			}).catch((err)=>{
+				res.status(400).json({error:  String(err)});
+			});
+		} catch (err) {
+			res.status(400).json({error:  String(err)});
+		}
+	}
+
+	private static listDatasets(req: Request, res: Response) {
+		try {
+			console.log("Server::listDatasets(..)");
+			const response =  new InsightFacade().listDatasets().then((arr)=>{
+				res.status(200).json({result: arr});
+			}).catch((err)=>{
+				res.status(400).json({error:  String(err)});
+			});
+		} catch (err) {
+			res.status(400).json({error:  String(err)});
+		}
+	}
+
 	private static addDataSet(req: Request, res: Response) {
 		try {
 			console.log(`Server::addDataSet(..) - params: ${JSON.stringify(req.params)}`);
 			let kind: InsightDatasetKind;
-			if (req.params.kind === "sections") {
+			if (req.params.kind === "sections" ) {
 				kind = InsightDatasetKind.Sections;
 			} else if (req.params.kind === "rooms") {
 				kind = InsightDatasetKind.Rooms;
@@ -130,10 +159,11 @@ export default class Server {
 					res.status(200).json({result: result});
 				})
 				.catch((err) => {
-					res.status(400).json({error: err});
+					console.log(err);
+					res.status(400).json({error: String(err)});
 				});
 		} catch (err) {
-			res.status(400).json({error: err});
+			res.status(400).json({error: String(err)});
 		}
 	}
 
@@ -146,13 +176,13 @@ export default class Server {
 				})
 				.catch((err) => {
 					if (err.message === "The input id did not exist!") {
-						res.status(404).json({error: err});
+						res.status(404).json({error: String(err)});
 					} else {
-						res.status(400).json({error: err});
+						res.status(400).json({error: String(err)});
 					}
 				});
 		} catch (err) {
-			res.status(400).json({error: err});
+			res.status(400).json({error: String(err)});
 		}
 	}
 }

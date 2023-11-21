@@ -21,15 +21,17 @@ describe("Facade D3", function () {
 		// ZIP_FILE_DATA = "/Users/ellenzhang/Desktop/project_team213/test/resources/archives/pair.zip";
 	});
 
-	after(function () {
+	after(async function () {
 		// TODO: stop server here once!
+		await server.stop();
 	});
 
-	beforeEach(function () {
+	beforeEach(async function () {
 		// might want to add some process logging here to keep track of what is going on
+
 	});
 
-	afterEach(function () {
+	afterEach(async function () {
 		// might want to add some process logging here to keep track of what is going on
 	});
 
@@ -60,9 +62,8 @@ describe("Facade D3", function () {
 	it("DELETE test for courses dataset", function () {
 		try {
 			return request("http://localhost:4321")
-				.put("/dataset/sections")
+				.delete("/dataset/sections")
 				.send(ZIP_FILE_DATA)
-				.set("Content-Type", "application/x-zip-compressed")
 				.then(function (res: Response) {
 					// some logging here please!
 					expect(res.status).to.be.equal(200);
@@ -83,6 +84,55 @@ describe("Facade D3", function () {
 				.get("/datasets")
 				.then(function (res: Response) {
 					// some logging here please!
+					expect(res.status).to.be.equal(200);
+				})
+				.catch(function (err) {
+					// some logging here please!
+					console.log(err);
+					expect.fail();
+				});
+		} catch (err) {
+			// and some more logging here!
+		}
+	});
+
+	it("POST test for courses dataset", function () {
+		try {
+			return request("http://localhost:4321")
+				.post("/query")
+				.send({
+					WHERE: {
+						AND: [
+							{
+								GT: {
+									sections_avg: 97,
+								},
+							},
+							{
+								IS: {
+									sections_dept: "c*",
+								},
+							},
+						],
+					},
+					OPTIONS: {
+
+						COLUMNS: [
+							"sections_dept",
+							"sections_avg"
+						],
+						ORDER: {
+							dir: "UP",
+							keys: [
+								"sections_avg"
+							]
+						}
+					}
+
+				})
+				.then(function (res: Response) {
+					// some logging here please!
+					console.log(res.body);
 					expect(res.status).to.be.equal(200);
 				})
 				.catch(function (err) {

@@ -172,9 +172,9 @@ export default class InsightFacade implements IInsightFacade {
 				// console.log("room check:" + this.rooms[0]);
 			}
 		}
-		console.log(root.toString());
+		// console.log(root.toString());
 		let result = this.answerQuery(root);
-		console.log(result);
+		// console.log(result);
 		return Promise.resolve(result);
 	}
 

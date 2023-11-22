@@ -94,6 +94,7 @@ export default class Server {
 		this.express.post("/query", Server.performQuery);
 		this.express.get("/datasets", Server.listDatasets);
 
+		this.express.post("/query/:fname/:lname", Server.getProfCourses);
 	}
 
 	// The next two methods handle the echo service.
@@ -184,5 +185,54 @@ export default class Server {
 		} catch (err) {
 			res.status(400).json({error: String(err)});
 		}
+	}
+
+	public static getProfCourses(req: Request, res: Response){
+		try{
+			const fullname: string =  req.params.lname + ", " + req.params.fname;
+			const query: object = {
+				WHERE: {
+					IS: {
+						sections_instructor: fullname
+					}
+				},
+				OPTIONS: {
+					COLUMNS: [
+						"sections_dept",
+						"sections_id"
+					],
+					ORDER: {
+						dir: "DOWN",
+						keys: [
+							"sections_dept"
+						]
+					}
+				},
+				TRANSFORMATIONS: {
+					GROUP: [
+						"sections_dept",
+						"sections_id"
+					],
+					APPLY: [
+						{
+							id: {
+								COUNT: "sections_id"
+							}
+						}
+					]
+				}
+			};
+			console.log(`Server::getProfCourses(..) - params: ${JSON.stringify(req.params)}`);
+			const response = new InsightFacade().performQuery(JSON.parse(JSON.stringify(query)))
+				.then((result)=>{
+					res.status(200).json({result: result});
+				}).catch((err)=>{
+					res.status(400).json({error: String(err)});
+				});
+		} catch (err) {
+			res.status(400).json({error: String(err)});
+		}
+
+
 	}
 }

@@ -94,7 +94,7 @@ export default class Server {
 		this.express.post("/query", Server.performQuery);
 		this.express.get("/datasets", Server.listDatasets);
 
-		this.express.post("/query/:fname/:lname", Server.getProfCourses);
+		this.express.get("/query/:fName/:lName", Server.getProfCourses);
 	}
 
 	// The next two methods handle the echo service.
@@ -188,51 +188,54 @@ export default class Server {
 	}
 
 	public static getProfCourses(req: Request, res: Response){
-		try{
-			const fullname: string =  req.params.lname + ", " + req.params.fname;
-			const query: object = {
-				WHERE: {
-					IS: {
-						sections_instructor: fullname
-					}
-				},
-				OPTIONS: {
-					COLUMNS: [
-						"sections_dept",
-						"sections_id"
-					],
-					ORDER: {
-						dir: "DOWN",
-						keys: [
-							"sections_dept"
-						]
-					}
-				},
-				TRANSFORMATIONS: {
-					GROUP: [
-						"sections_dept",
-						"sections_id"
-					],
-					APPLY: [
-						{
-							id: {
-								COUNT: "sections_id"
-							}
-						}
+		let query = {
+			WHERE: {
+				IS: {
+					sections_instructor: req.params.lName + ", " + req.params.fName
+				}
+			},
+			OPTIONS: {
+				COLUMNS: [
+					"sections_dept",
+					"sections_id",
+					"sections_title"
+				],
+				ORDER: {
+					dir: "DOWN",
+					keys: [
+						"sections_dept"
 					]
 				}
-			};
+			},
+			TRANSFORMATIONS: {
+				GROUP: [
+					"sections_dept",
+					"sections_id",
+					"sections_title"
+				],
+				APPLY: [
+					{
+						i: {
+							COUNT: "sections_id"
+						}
+					}
+				]
+			}
+		};
+
+		try{
 			console.log(`Server::getProfCourses(..) - params: ${JSON.stringify(req.params)}`);
-			const response = new InsightFacade().performQuery(JSON.parse(JSON.stringify(query)))
+			let facade =  new InsightFacade();
+			facade.performQuery(query)
 				.then((result)=>{
+					console.log(result);
 					res.status(200).json({result: result});
 				}).catch((err)=>{
+					// console.log(err);
 					res.status(400).json({error: String(err)});
 				});
 		} catch (err) {
 			res.status(400).json({error: String(err)});
 		}
-
-
 	}
 }

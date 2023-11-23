@@ -2,19 +2,23 @@
 <html>
 <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
-    <title>310 Frontend</title>
-    <link href="/frontend/public/style.css" type="text/css" rel="stylesheet"/>
+	<title>310 Frontend</title>
+    <link href="/style.css" type="text/css" rel="stylesheet"/>
 </head>
 <body>
 <h2>Find a professor's courses</h2>
 <div class = "container">
+	<p class ="msg" id="message1">Please input the first name and last name of a professor</p>
 	<div class = "input-container">
-		<label for="prof_fname"></label><input placeholder="first name" value="" id="prof_fname" />
-		<label for="prof_lname"></label><input  placeholder="last name" value="" id="prof_lname" />
+		<label for="prof_fname"></label><input placeholder="first name" value="" id="prof_fName" />
+		<label for="prof_lname"></label><input  placeholder="last name" value="" id="prof_lName" />
 		<button id="user1_button" class = "button">Explore a professor's courses</button>
 	</div>
 	<div class ="outputBox">
+		<p class = "title">Course name</p>
+		<table id="output">
 
+		</table>
 	</div>
 </div>
 
@@ -35,3 +39,9 @@
 <script type="text/javascript" src="/frontend.js"></script>
 </body>
 </html>
+
+<!--<base href="http://example" >-->
+<!--frontend/public-->
+<!--<tr>-->
+<!--	<th>Course department id</th>-->
+<!--</tr>-->

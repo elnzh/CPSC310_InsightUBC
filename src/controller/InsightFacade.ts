@@ -148,6 +148,7 @@ export default class InsightFacade implements IInsightFacade {
 
 	public performQuery(query: unknown): Promise<InsightResult[]> {
 		// initialize querybuilder
+
 		this.querybuilder = new QueryBuilder();
 		let root = this.querybuilder.parseQuery(query);
 		let queryKind = this.querybuilder.getType();
@@ -172,9 +173,7 @@ export default class InsightFacade implements IInsightFacade {
 				// console.log("room check:" + this.rooms[0]);
 			}
 		}
-		// console.log(root.toString());
 		let result = this.answerQuery(root);
-		// console.log(result);
 		return Promise.resolve(result);
 	}
 

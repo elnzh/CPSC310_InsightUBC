@@ -263,18 +263,19 @@ export default class Server {
 						NOT: {
 							IS: {
 								sections_instructor: ""
-							}
-						}
-					}
-				]
-			},
+							}}}]},
 			OPTIONS: {
 				COLUMNS: [
 					"sections_avg",
 					"sections_instructor",
 					"sections_uuid"
 				],
-				ORDER: "sections_avg"
+				ORDER: {
+					dir: "DOWN",
+					keys: [
+						"sections_avg"
+					]
+				}
 			}
 		};
 		try{

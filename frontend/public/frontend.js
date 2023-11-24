@@ -4,6 +4,11 @@ document.getElementById("user2_button").addEventListener("click", handleUser2But
 document.getElementById("prof_fName").addEventListener("click", changeBackMsg);
 document.getElementById("prof_lName").addEventListener("click", changeBackMsg);
 
+document.getElementById("course_department").addEventListener("click", changeBackMsg2);
+document.getElementById("course_id").addEventListener("click", changeBackMsg2);
+document.getElementById("course_year").addEventListener("click", changeBackMsg2);
+
+
 function handleUser1Button() {
     //alert("");
 	document.getElementById("output").innerHTML = "";
@@ -59,10 +64,17 @@ function changeBackMsg(){
 }
 
 
+function changeBackMsg2(){
+	let msg = document.getElementById("message2");
+	msg.innerText = "Please input course department, id and year";
+	msg.style.color = "black";
+}
+
+
 function handleUser2Button() {
     //alert("");
-	let msg = document.getElementById("message1");
-	document.getElementById("output").innerHTML = "";
+	let msg = document.getElementById("message2");
+	document.getElementById("output2").innerHTML = "";
 	let dept = document.getElementById('course_department').value;
 	let id;
 	const idValue = document.getElementById('course_id').value;
@@ -70,6 +82,7 @@ function handleUser2Button() {
 		id = idValue;
 	} else {
 		msg.innerText = "Please input the valid id";
+		msg.style.color="red";
 		return;
 	}
 	let year;
@@ -78,6 +91,7 @@ function handleUser2Button() {
 		year = parseInt(yearValue);
 	} else {
 		msg.innerText = "Please input the valid year";
+		msg.style.color="red";
 		return;
 	}
 	let url = "/queryForBestProf/" + dept+"/" + id+"/" + year;
@@ -98,10 +112,12 @@ function handleUser2Button() {
 			.catch(error => {
 				console.log(error);
 				msg.innerText = "Unexpected error happened: " + String(error);
+				msg.style.color = "red";
 			});
 	}catch(err){
 		console.log(err);
 		msg.innerText = "Unexpected error happened: " + String(err);
+		msg.style.color = "red";
 	}
 
 //console.log(queryTemplate);

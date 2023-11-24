@@ -16,8 +16,9 @@
 }
 
 .outputBox{
-	width: 300px;
-	height: 100px;
+	width: 80%;
+	height: auto;
+	min-height: 100px;
 	flex-direction:row;
 	border-style: solid;
 	border-width: 0.5px;

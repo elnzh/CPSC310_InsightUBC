@@ -95,6 +95,7 @@ export default class Server {
 		this.express.get("/datasets", Server.listDatasets);
 
 		this.express.get("/query/:fName/:lName", Server.getProfCourses);
+		this.express.get("/queryForBestProf/:dept/:id/:year", Server.getBestProf);
 	}
 
 	// The next two methods handle the echo service.
@@ -232,6 +233,57 @@ export default class Server {
 					res.status(200).json({result: result});
 				}).catch((err)=>{
 					// console.log(err);
+					res.status(400).json({error: String(err)});
+				});
+		} catch (err) {
+			res.status(400).json({error: String(err)});
+		}
+	}
+
+	public static getBestProf(req: Request, res: Response) {
+		let query = {
+			WHERE: {
+				AND: [
+					{
+						IS: {
+							sections_dept: req.params.dept
+						}
+					},
+					{
+						IS: {
+							sections_id: req.params.id
+						}
+					},
+					{
+						EQ: {
+							sections_year: parseInt(req.params.year, 10)
+						}
+					},
+					{
+						NOT: {
+							IS: {
+								sections_instructor: ""
+							}
+						}
+					}
+				]
+			},
+			OPTIONS: {
+				COLUMNS: [
+					"sections_avg",
+					"sections_instructor",
+					"sections_uuid"
+				],
+				ORDER: "sections_avg"
+			}
+		};
+		try{
+			console.log(`Server::getBestProf(..) - params: ${JSON.stringify(req.params)}`);
+			let facade =  new InsightFacade();
+			facade.performQuery(query)
+				.then((result)=>{
+					res.status(200).json({result: result});
+				}).catch((err)=>{
 					res.status(400).json({error: String(err)});
 				});
 		} catch (err) {

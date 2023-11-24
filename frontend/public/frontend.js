@@ -30,9 +30,11 @@ function handleUser1Button() {
 					 let res = JSON.parse(text).result;
 					if(res.length === 0){
 						msg.innerText = "No record found, please check your spelling";
+						msg.style.color = "red";
 					}else{
 						for(let i=0; i<res.length; i++){
-							let str = res[i].sections_dept + res[i].sections_id + ": " + res[i].sections_title;
+							let str = res[i].sections_dept + res[i].sections_id + ": " + res[i].sections_title +
+								"(" + res[i].sections_year + ")";
 							document.getElementById("output").insertRow().innerText = str;
 						}
 					}
@@ -102,6 +104,7 @@ function handleUser2Button() {
 				let res = JSON.parse(text).result;
 				if(res.length === 0){
 					msg.innerText = "No record found, please check your spelling";
+					msg.style.color = "red";
 				}else{
 					for(let i=0; i<res.length; i++){
 						let str = res[i].sections_avg + "	" + res[i].sections_instructor + ":  " + res[i].sections_uuid;

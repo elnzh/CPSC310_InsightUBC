@@ -193,26 +193,25 @@ export default class Server {
 			WHERE: {
 				IS: {
 					sections_instructor: req.params.lName + ", " + req.params.fName
-				}
-			},
+				}},
 			OPTIONS: {
 				COLUMNS: [
 					"sections_dept",
 					"sections_id",
-					"sections_title"
+					"sections_title",
+					"sections_year"
 				],
 				ORDER: {
 					dir: "DOWN",
 					keys: [
-						"sections_dept"
-					]
-				}
-			},
+						"sections_year", "sections_dept"
+					]}},
 			TRANSFORMATIONS: {
 				GROUP: [
 					"sections_dept",
 					"sections_id",
-					"sections_title"
+					"sections_title",
+					"sections_year"
 				],
 				APPLY: [
 					{
@@ -229,7 +228,7 @@ export default class Server {
 			let facade =  new InsightFacade();
 			facade.performQuery(query)
 				.then((result)=>{
-					console.log(result);
+					// console.log(result);
 					res.status(200).json({result: result});
 				}).catch((err)=>{
 					// console.log(err);

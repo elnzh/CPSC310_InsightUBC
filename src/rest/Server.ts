@@ -248,8 +248,7 @@ export default class Server {
 						IS: {
 							sections_dept: req.params.dept
 						}
-					},
-					{
+					}, {
 						IS: {
 							sections_id: req.params.id
 						}
@@ -257,8 +256,7 @@ export default class Server {
 					{
 						EQ: {
 							sections_year: parseInt(req.params.year, 10)
-						}
-					},
+						}},
 					{
 						NOT: {
 							IS: {
